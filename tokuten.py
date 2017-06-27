@@ -6,13 +6,42 @@ import mj_util
 import syanten
 
 
-def is_mentsu_churenpoutou():
-#メンツが九蓮宝燈かどうか
+def make_tehai():
+#mentsu,headからtehaiを生成
     global mentsu
     global head
+    tehai = [0]*40
+    for i in range(len(mentsu)):
+        if mentsu[i][1] == 0:
+            tehai[mentsu[i][0]] += 3
+        elif mentsu[i][1] == 0:
+            tehai[mentsu[i][0]] += 1
+            tehai[mentsu[i][0]+1] += 1
+            tehai[mentsu[i][0]+2] += 1
+    tehai[head] += 2
+    return tehai
+
+def is_mentsu_ryuiisou():
+#メンツが緑一色かどうか
+    global g_tehai
+    #緑色の牌一覧
+    green_hai = [22,23,24,26,28,36]
+    #緑色の牌の合計が14枚ならTrue    
+    if sum([g_tehai[x] for x in green_hai]) == 14:
+        return True
+    else:
+        return False
+
+
+def is_mentsu_churenpoutou():
+#メンツが九蓮宝燈かどうか
+    global g_tehai
+    least_hai = [3,1,1,1,1,1,1,1,3]
     for i in range(3):
-        if len([x for x in mentsu if x[0]/10] == i) == 4 and head/10 == i:
-            return True
+        for j in range(9):
+            if not tehai[i*10+j+1] >= least_hai[j]:
+                return False
+    #あがっている前提なので、残り１枚が何かはみない
     return False
 
 
@@ -52,6 +81,17 @@ def is_mentsu_chinroutou():
     else:
         return False
 
+
+
+def is_mentsu_daisushi():
+#メンツが大四喜和かどうか
+    global mentsu
+    #31,32,33,34全てがメンツに刻子として含まれていればTrue
+    if all(x in mentsu[:][0] for x in [31,32,33,34]):
+        return True
+    else:
+        return False
+
 def is_mentsu_shosushi():
 #メンツが小四喜和かどうか
     global mentsu
@@ -64,17 +104,6 @@ def is_mentsu_shosushi():
         return False
     #31,32,33,34全てがメンツに刻子として含まれていればTrue
     if all(x in mentsu[:][0] for x in kazehai):
-        return True
-    else:
-        return False
-
-
-
-def is_mentsu_daisushi():
-#メンツが大四喜和かどうか
-    global mentsu
-    #31,32,33,34全てがメンツに刻子として含まれていればTrue
-    if all(x in mentsu[:][0] for x in [31,32,33,34]):
         return True
     else:
         return False
@@ -112,6 +141,7 @@ def is_mentsu_shousangen():
 def is_mentsu_sananko():
 #メンツが三暗刻かどうか
     global mentsu
+    
     
 
 def is_mentsu_toitoi():
@@ -323,6 +353,7 @@ mentsu_num = 0
 max_fan = 0
 furo = None
 tsumo_hai = None
+g_tehai = [0]*40
 
 def calcu_mentsu_fan(tehai,tsumo):
     """
@@ -394,11 +425,29 @@ def check_mentsu(i):
     check_mentsu(i+1)
 
 
+"""
+************************************************************
+************************************************************
+************************************************************
+************************************************************
+************************************************************
+************************************************************
+************************************************************
+"""
+
+
 def check_yaku_mentsu():
     """
     バックトラック法で抽出したメンツに対して役を計算する
     """
     global furo
+    global mentsu
+    global head
+    global g_tehai
+
+    #global変数の手牌を生成
+    g_tehai = make_tehai()
+
     #フーロしているかどうか確認
     furo_flg = False
     if not furo == None:
@@ -414,10 +463,16 @@ def check_yaku_mentsu():
 
     #鳴きの有無に関係ない役
     #まずは役満
-    if is_mentsu_daisushi():
+    if is_mentsu_ryuiisou():
+        ran = 13
+        return fan,fu
+    if is_mentsu_tsuiitou():
         fan = 13
         return fan,fu
     if is_mentsu_chinroutou():
+        fan = 13
+        return fan,fu
+    if is_mentsu_daisushi():
         fan = 13
         return fan,fu
     if is_mentsu_shosushi():
@@ -426,20 +481,22 @@ def check_yaku_mentsu():
     if is_mentsu_daisangen():
         fan = 13
         return fan,fu
-    if is_mentsu_tsuiitou():
-        fan = 13
-        return fan,fu
 
-
+    #タンヤオ（とりあえず喰いタンありの前提）
     if is_mentsu_tanyao():
         fan += 1
 
     #面前の場合のみの役
     if not furo_flg:
+        #九蓮宝燈
+        if is_mentsu_churenpoutou():
+            fan = 13
+            return fan,fu
         #四暗刻
         if is_mentsu_suanko():
             fan = 13
             return fan,fu
+        #
 
 
 
