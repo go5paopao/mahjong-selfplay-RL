@@ -7,7 +7,10 @@ import mj_util
 
 def get_syanten(origin_tehai):
     #tehaiの形を40にかえる
-    tehai = tehai_34to40(origin_tehai)
+    if len(origin_tehai) == 34:
+        tehai = tehai_34to40(origin_tehai)
+    else:
+        tehai = origin_tehai
     #国士無双のシャンテン数を計算
     kokusi_syanten = get_syanten_kokusi(tehai)
     #print "kokusi: " + str(kokusi_syanten)

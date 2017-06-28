@@ -112,7 +112,9 @@ def is_mentsu_shosushi():
 def is_mentsu_daisangen():
 #メンツが大三元かどうか
     global mentsu
+    print mentsu
     #35,36,37全てがメンツに刻子として含まれていればTrue
+    print mentsu[:,0]
     if all(x in mentsu[:][0] for x in [35,36,37]):
         return True
     else:
@@ -163,7 +165,7 @@ def is_mentsu_pinfu(bakaze,jikaze):
     global mentsu
     global head
     #全て順子がどうか
-    if all(x[1] == 0 for x in mentsu) and (head<30 or head in [set([31,32,33,34]) - set([bakaze,jikaze])]:
+    if all(x[1] == 0 for x in mentsu) and (head<30 or head in [set([31,32,33,34]) - set([bakaze,jikaze])]):
         return True
     else:
         return False
@@ -191,7 +193,7 @@ def is_mentsu_junchan():
     global head
     for i in range(4):
         #刻子の場合、10で割った余りが2-8ならFalse(字牌は上で取り除いている)
-        if mentsu[i][1] == 0 and (mentsu[i][0]%10 in [2,3,4,5,6,7,8,31,32,33,34,35,36,37]:
+        if mentsu[i][1] == 0 and mentsu[i][0]%10 in [2,3,4,5,6,7,8,31,32,33,34,35,36,37]:
             return False
         if mentsu[i][1] == 1 and mentsu[i][0]%10 in [2,3,4,5,6]:
             return False
@@ -397,7 +399,6 @@ def check_mentsu(i):
         if fan > max_fan:
             max_fan = fan
         return
-
     if check_kotsu(tmp_tehai,i):
         tmp_tehai[i] -= 3
         mentsu[mentsu_num] = [i,0]
@@ -496,11 +497,8 @@ def check_yaku_mentsu():
         if is_mentsu_suanko():
             fan = 13
             return fan,fu
-        #
 
-
-
-
+    return fan,fu
     #鳴いている場合と面前で翻数が違う役
 
 
@@ -611,7 +609,7 @@ def is_kokusi(tehai):
         return False 
 
 
-def is_chiitoitu(tehai):
+def is_chiitoitsu(tehai):
     """
     七対子かどうかのチェック
     """
@@ -648,6 +646,8 @@ def get_tokuten(origin_tehai,reach=False,bakaze=0,kyoku=1,honba=0,oya=False,tsum
 
     #上がっていなければ０点を返す
     if syanten.get_syanten(origin_tehai) > -1:
+        print syanten.get_syanten(origin_tehai)
+        print "not houra"
         return 0
 
     #tehaiの形を40にかえる
@@ -666,9 +666,7 @@ def get_tokuten(origin_tehai,reach=False,bakaze=0,kyoku=1,honba=0,oya=False,tsum
         fu = 25
     #上記を除けばメンツ手
     else:
-        fan, fu = calcu_mentsu_fan(tehai,tsumo,furo)
-
-
+        fan, fu = calcu_mentsu_fan(tehai,tsumo)
 
     #以下、共通的な処理
 
@@ -682,6 +680,9 @@ def get_tokuten(origin_tehai,reach=False,bakaze=0,kyoku=1,honba=0,oya=False,tsum
     if furo == None and tsumo:
         fan += 1
     
+    print fan
+    print fu
+
     #上記の役がつかず翻が0であれば役なし。0点として返す
     if fan == 0:
         return 0
@@ -700,6 +701,8 @@ def get_tokuten(origin_tehai,reach=False,bakaze=0,kyoku=1,honba=0,oya=False,tsum
 
 #計算しやすさから手牌を0~33ではなく0~37にかえる
 def tehai_34to40(tehai):
+    if len(tehai) == 40:
+        return tehai
     tehai_40 = [0] * 40
     for i in range(0,9):
         tehai_40[i+1] = tehai[i]
@@ -716,10 +719,12 @@ def tehai_34to40(tehai):
 
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
-    tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
-    furo = [[3,1],[35,0]]
-    tehai_hist = mjutil.get_hist(tehai)
-    tokuten = get_tokuten(tehai_hist,furo=furo)
-    print "tokuten = " + str(syanten)
+    #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
+    tehai = [3,4,5,35,35,35,36,36,36,37,37,37,31,31]
+    #furo = [[3,1],[35,0]]
+    furo = []
+    tehai_hist = mj_util.get_hist(tehai)
+    tokuten = get_tokuten(tehai_hist,arg_furo=furo)
+    #print "tokuten = " + str(syanten)
 
 
