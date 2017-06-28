@@ -19,7 +19,7 @@ def get_syanten(origin_tehai):
     #print "chiitoitu: " + str(chiitoitu_syanten)
     #メンツ手のシャンテン数を計算
     mentu_syanten = get_syanten_mentu(tehai)
-    #print "mentu: " + str(mentu_syanten)
+    #print ("mentu: " + str(mentu_syanten))
     #最も小さいシャンテン数を結果とする
     syanten = min(kokusi_syanten,chiitoitu_syanten,mentu_syanten)
     #print "syanten: " + str(syanten)
@@ -42,7 +42,7 @@ def get_syanten_mentu(origin_tehai):
     global tmp_tehai
 
     if 'numpy' in str(type(origin_tehai)):
-        tmp_tehai = origin_tehai.copy()    
+        tmp_tehai = origin_tehai.copy()
     if isinstance(origin_tehai,list):
         tmp_tehai = origin_tehai[:]
 
@@ -89,7 +89,7 @@ def check_mentu(i):
         check_mentu(i)
         tmp_tehai[i] += 3
         mentu -= 1
-        
+
     if check_shuntu(tmp_tehai,i):
         tmp_tehai[i] -= 1
         tmp_tehai[i+1] -= 1
@@ -116,7 +116,11 @@ def check_taatu(i):
         i += 1
 
     if i >= 38:
-        tmp = 8 - mentu*2 - kouho - toitu
+
+        if mentu == 4:
+            tmp = 8 - mentu*2 - toitu
+        else:
+            tmp = 8 - mentu*2 - kouho - toitu
         if tmp < min_mentu_syanten:
             min_mentu_syanten = tmp
         return
@@ -164,7 +168,7 @@ def check_taatu(i):
 
 
 
-#国士無双のシャンテン数を求める       
+#国士無双のシャンテン数を求める
 def get_syanten_kokusi(tehai):
     yaochu_list = [1,9,11,19,21,29,31,32,33,34,35,36,37]
     kokusi_syanten = 14
@@ -210,7 +214,7 @@ def agari_check(tehai,monte_flg = False):
     agari_hai = [0] * 34
     # 手牌の枚数を牌種ごとにカウント→今回はtehaiがカウントされたものなので変更
     if 'numpy' in str(type(tehai)):
-        counter = tehai.copy()    
+        counter = tehai.copy()
     if isinstance(tehai,list):
         counter = tehai[:]
     # 各牌について対子かどうか判定
@@ -229,7 +233,7 @@ def agari_check(tehai,monte_flg = False):
                     tmp[j] += -3 #刻子を除去
                     agari_hai[j] += 3
                 else:
-                    continue                    
+                    continue
         # 順子の判定
             for k in range(len(counter)-7): #字牌の処理は不要
                 if check_shuntu(tmp,k):
@@ -248,7 +252,7 @@ def agari_check(tehai,monte_flg = False):
             continue
     if monte_flg == False:
         if agarihantei == True:
-            #print 'Agari!!!!!!!!!'
+            print ('Agari!!!!!!!!!')
             return True
         else:
             #print 'No-ten'
@@ -265,14 +269,14 @@ def agari_check(tehai,monte_flg = False):
 
 def countpai(tehai):
     if 'numpy' in str(type(tehai)):
-        counter = tehai.copy()    
+        counter = tehai.copy()
     if isinstance(tehai,list):
         counter = tehai[:]
     return counter
 
 def check_head(headcounter,i):
 # 対子かどうかの判定
-    if headcounter[i] >= 2: 
+    if headcounter[i] >= 2:
         return True
     else:
         return False
@@ -303,7 +307,7 @@ def check_toitu(counter,i):
 def check_ryanmen(counter,i):
     #両面
     if i > 30:
-        return False    
+        return False
     if counter[i] >= 1 and counter[i+1] >= 1 and i < 30 and i%10 < 9 and i%10 > 1:
         return True
     else:
@@ -330,9 +334,7 @@ def check_penchan(counter,i):
 
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
-    tehai = [3,4,8,11,12,12,13,13,18,19,26,32,32,33]
-    tehai_hist = mjutil.get_hist(tehai)
+    tehai = [31,31,31,32,32,32,33,33,33,34,34,34,11,12]
+    tehai_hist = mj_util.get_hist(tehai)
     syanten = get_syanten(tehai_hist)
-    print "syanten = " + str(syanten)
-
-
+    print ("syanten = " + str(syanten))

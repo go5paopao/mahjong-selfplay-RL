@@ -17,6 +17,4 @@ if __name__ == "__main__":
     tehai = [3,4,8,11,12,12,13,13,18,19,26,32,32,33]
     tehai_hist = get_hist(tehai)
     syanten = get_syanten(tehai_hist)
-    print "syanten = " + str(syanten)
-
-
+    print ("syanten = " + str(syanten))
