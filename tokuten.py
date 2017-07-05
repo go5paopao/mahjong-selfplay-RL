@@ -162,6 +162,19 @@ def is_mentsu_shousangen():
 def is_mentsu_sananko():
 #メンツが三暗刻かどうか
     global mentsu
+    global furo
+    anko_num = 0
+    #for x in mentsu:
+    #    if x[1] == 0 and x[0] in furo[:,0]:
+    #        anko_num += 1
+
+
+    if len([x for x in mentsu if x[1] == 0 and not x[0] in [y[0] for y in furo if y[1] == 0]]) == 3:
+        if debug_flg:
+            print "三暗刻" 
+            return True
+    else:
+        return False
 
 
 
@@ -276,7 +289,7 @@ def is_mentsu_sanshokudoujun():
 
 
 def is_mentsu_iipeiko():
-#メンツがイーペーコーかどうか
+#メンツがイーペーコーかどうか(鳴いていない前提)
     global mentsu
     #順子のリストを作成し、重複したものを含んでいるかをチェック
     shuntsu_list = [x[0] for x in mentsu if x[1] ==1] #順子の牌番号リスト
@@ -289,7 +302,7 @@ def is_mentsu_iipeiko():
 
 
 def is_mentsu_ryanpeiko():
-#メンツがリャンペーコーかどうか
+#メンツがリャンペーコーかどうか(鳴いていない前提)
     global mentsu
     #順子のリストを作成し、重複したものを2つ以上含んでいるかをチェック
     shuntsu_list = [x[0] for x in mentsu if x[1] ==1] #順子の牌番号リスト
@@ -304,12 +317,10 @@ def is_mentsu_ryanpeiko():
 
 
 def is_mentsu_honitsu():
-#メンツがホンイツかどうか
+#メンツがホンイツかどうか(鳴いているかは関係なし)
     global mentsu
     global head
     #字牌と数牌を含んでいるか→ないとホンイツではない
-    if len([x for x in mentsu if x[0] > 30]) == 0 or len([x for x in mentsu if x[0] < 30]) == 0:
-        return False
     for i in range(3):
         if len([x for x in mentsu if x[0]/10 in [i,3]]) == 4 and head/10 in [i,3]:
             if debug_flg:
@@ -320,11 +331,12 @@ def is_mentsu_honitsu():
 
 
 def is_mentsu_chinitsu():
-#メンツがチンイツかどうか
+#メンツがチンイツかどうか(鳴いているかは関係なし)
     global mentsu
     global head
     for i in range(3):
-        if len([x for x in mentsu if x[0]/10] == i) == 4 and head/10 == i:
+        if len([x for x in mentsu if x[0]/10 == i
+            ]) == 4 and head/10 == i:
             if debug_flg:
                 print("清一色")
             return True
@@ -548,11 +560,14 @@ def check_yaku_mentsu():
     if is_mentsu_shousangen():
         fan += 2
 
+    if is_mentsu_sananko():
+        fan += 2
+
     #タンヤオ（とりあえず喰いタンありの前提）
     if is_mentsu_tanyao():
         fan += 1
 
-    #面前の場合のみの役
+    #面前の場合
     if not furo_flg:
         #九蓮宝燈
         if is_mentsu_churenpoutou():
@@ -568,9 +583,24 @@ def check_yaku_mentsu():
         #平和
         if is_mentsu_pinfu():
             fan += 1
-
+        #染め手
+        #チンイツ
+        if is_mentsu_chinitsu():
+            fan += 6
+        #ホンイツ
+        elif is_mentsu_honitsu():
+            fan += 3
+    #鳴いている場合
+    else:
+        #染め手
+        #チンイツ
+        if is_mentsu_chinitsu():
+            fan += 5
+        #ホンイツ
+        elif is_mentsu_honitsu():
+            fan += 2
     return fan,fu
-    #鳴いている場合と面前で翻数が違う役
+
 
 
 def calcu_chiitoitsu_fan(tehai):
@@ -599,34 +629,30 @@ def calcu_chiitoitsu_fan(tehai):
     return fan
 
 
-def is_tanyao(tehai):
+
+
+
+def is_chiitoitsu_tanyao(tehai):
     """
     タンヤオかどうか
     """
-    if sum(tehai[2:9],tehai[12,19],tehai[22,29]) == 14:
+    if all(tehai[x] == 0 for x in [1,9,11,19,21,29,31,32,33,34,35,36,37]):
+        if debug_flg:
+            print "タンヤオ"
         return True
     else:
         return False
-
-
-def is_chinroutou(tehai):
-    """
-    清老頭かどうか
-    """
-    if sum(tehai[1],tehai[9],tehai[11],tehai[19],tehai[21],tehai[29]) == 14:
-        return True
-    else:
-        return False
-
 
 
 def is_chiitoitsu_honroutou(tehai):
     """
     混老頭かどうか
     """
-    num_19 = sum(tehai[1],tehai[9],tehai[11],tehai[19],tehai[21],tehai[29])
+    num_19 = sum([tehai[1],tehai[9],tehai[11],tehai[19],tehai[21],tehai[29]])
     num_jihai = sum(tehai[31:38])
     if num_19 > 0 and num_jihai > 0 and num_19 + num_jihai == 14:
+        if debug_flg:
+            print "混老頭"
         return True
     else:
         return False
@@ -640,6 +666,8 @@ def is_chiitoitsu_honitsu(tehai):
     if sum(tehai[1:10]) + jihai_num == 14 \
     or sum(tehai[11:20]) + jihai_num == 14 \
     or sum(tehai[21:30]) + jihai_num == 14:
+        if debug_flg:
+            print("混一色")
         return True
     else:
         return False
@@ -653,6 +681,8 @@ def is_chiitoitsu_chinitsu(tehai):
     if sum([x for x in tehai[1:10]]) == 14 \
     or sum([x for x in tehai[11:20]]) == 14 \
     or sum([x for x in tehai[21:30]]) == 14:
+        if debug_flg:
+            print("清一色")
         return True
     else:
         return False
@@ -662,7 +692,9 @@ def is_chiitoitsu_tsuuiisou(tehai):
     """
     字一色かどうかのチェック
     """
-    if sum([x for x in tahei[31:38]] == 14):
+    if sum([x for x in tehai[31:38]]) == 14:
+        if debug_flg:
+            print("字一色")
         return True
     else:
         return False
@@ -685,6 +717,8 @@ def is_chiitoitsu(tehai):
     七対子かどうかのチェック
     """
     if len([x for x in tehai if x == 2]) == 7:
+        if debug_flg:
+            print("七対子")
         return True
     else:
         return False
@@ -796,9 +830,11 @@ def tehai_34to40(tehai):
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
-    tehai = [22,22,23,23,24,24,26,26,26,28,28,28,36,36]
+    tehai = [31,31,31,32,32,32,33,33,33,11,12,13,14,14]
     #furo = [[3,1],[35,0]]
+    #furo = [[32,0]]
     furo = []
+
     tehai_hist = mj_util.get_hist(tehai)
     tokuten = get_tokuten(tehai_hist,arg_furo=furo)
     #print "tokuten = " + str(syanten)
