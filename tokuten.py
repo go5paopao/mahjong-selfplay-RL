@@ -256,7 +256,7 @@ def is_mentsu_honroutou():
     #全ての刻子がヤオチュウ牌で、頭もヤオチュウならTrue
     if all(x in yaochu_list for x in kotsu_list) and head in yaochu_list:
         if debug_flg:
-            print("混老頭等")
+            print("混老頭")
         return True
     else:
         return False
@@ -556,11 +556,16 @@ def check_yaku_mentsu():
         fan = 13
         return fan,fu
 
-
+    #小三元
     if is_mentsu_shousangen():
         fan += 2
 
+    #三暗刻
     if is_mentsu_sananko():
+        fan += 2
+
+    #三色同刻
+    if is_mentsu_sanshokudoukou():
         fan += 2
 
     #タンヤオ（とりあえず喰いタンありの前提）
@@ -583,6 +588,9 @@ def check_yaku_mentsu():
         #平和
         if is_mentsu_pinfu():
             fan += 1
+        #三色同順
+        if is_mentsu_sanshokudoujun():
+            fan += 2
         #染め手
         #チンイツ
         if is_mentsu_chinitsu():
@@ -590,6 +598,13 @@ def check_yaku_mentsu():
         #ホンイツ
         elif is_mentsu_honitsu():
             fan += 3
+
+        #チャンタ
+        if is_mentsu_junchan():
+            fan += 3
+        elif is_mentsu_chanta():
+            fan += 2
+
     #鳴いている場合
     else:
         #染め手
@@ -599,6 +614,14 @@ def check_yaku_mentsu():
         #ホンイツ
         elif is_mentsu_honitsu():
             fan += 2
+        #三色同順
+        if is_mentsu_sanshokudoujun():
+            fan += 1
+        #チャンタ
+        if is_mentsu_junchan():
+            fan += 2
+        elif is_mentsu_chanta():
+            fan += 1
     return fan,fu
 
 
@@ -791,8 +814,8 @@ def get_tokuten(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaz
     if furo == None and tsumo:
         fan += 1
 
-    print (fan)
-    print (fu)
+    print str(fan) + "翻"
+    print str(fu) + "符"
 
     #上記の役がつかず翻が0であれば役なし。0点として返す
     if fan == 0:
@@ -830,10 +853,10 @@ def tehai_34to40(tehai):
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
-    tehai = [31,31,31,32,32,32,33,33,33,11,12,13,14,14]
+    tehai = [11,12,13,21,22,23,1,2,3,7,8,9,19,19]
     #furo = [[3,1],[35,0]]
-    #furo = [[32,0]]
-    furo = []
+    furo = [[11,1]]
+    #furo = []
 
     tehai_hist = mj_util.get_hist(tehai)
     tokuten = get_tokuten(tehai_hist,arg_furo=furo)
