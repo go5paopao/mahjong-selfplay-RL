@@ -5,6 +5,16 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 import mj_util
 import syanten
 
+
+"""
+点数計算をするモジュール
+mentsu:[始まりの牌,メンツの種類]
+メンツの種類
+ 0:刻子
+ 1:順子
+"""
+
+
 debug_flg = True
 
 def make_tehai():
@@ -200,8 +210,10 @@ def is_mentsu_pinfu():
     global head
     global bakaze
     global jikaze
-    #全て順子がどうか
-    if all(x[1] == 0 for x in mentsu) and (head<30 or head in [set([31,32,33,34]) - set([bakaze,jikaze])]):
+    global agari_hai
+    #全て順子がどうか、かつ頭が数牌をオタ風、かつツモ牌が順子の端かどうかで判断
+    if all(x[1] == 1 for x in mentsu) and (head<30 or head in set([31,32,33,34]) - set([bakaze,jikaze])) \
+       and agari_hai in set([x[0] for x in mentsu if x[1] == 1] + [x[0]+2 for x in mentsu if x[1] == 1]):
         if debug_flg:
             print("平和")
         return True
@@ -301,8 +313,26 @@ def is_mentsu_iipeiko():
         return False
 
 
-def is_mentsu_ryanpeiko():
+def is_mentsu_ryanpeiko(check=False):
 #メンツがリャンペーコーかどうか(鳴いていない前提)
+    global g_tehai
+    tmp_tehai = g_tehai[:]
+    peiko_num = 0
+    for i in range(28):
+        if tmp_tehai[i] == 2 and tmp_tehai[i+1] == 2 and tmp_tehai[i+2] == 2:
+            peiko_num += 1
+            tmp_tehai[i] -= 2
+            tmp_tehai[i+1] -= 2
+            tmp_tehai[i+2] -= 2
+
+    if peiko_num == 2:
+        if debug_flg and not check:
+            print("二盃口")
+        return True
+    else:
+        return False
+
+    """
     global mentsu
     #順子のリストを作成し、重複したものを2つ以上含んでいるかをチェック
     shuntsu_list = [x[0] for x in mentsu if x[1] ==1] #順子の牌番号リスト
@@ -314,7 +344,7 @@ def is_mentsu_ryanpeiko():
         return True
     else:
         return False
-
+    """
 
 def is_mentsu_honitsu():
 #メンツがホンイツかどうか(鳴いているかは関係なし)
@@ -410,7 +440,7 @@ def check_shuntsu(shuntsu_counter,i):
 
 
 #メンツ手の計算用グルーバル変数
-mentsu = np.array([[0]*2]*4)  #mentsu[i] = [j,k] :i番目のメンツは牌jから始まる（k=0:刻子 1:順子）
+mentsu = np.array([[0]*2]*4)  #mentsu[i] = [j,k] :i番目のメンツは牌jから始まる（k=0:刻子 1:順子 2:カン）
 head = 0
 tmp_tehai = [0]*40
 tmp_syanten = 8
@@ -418,10 +448,12 @@ mentsu_num = 0
 max_fan = 0
 max_fu = 0
 furo = None
-tsumo_hai = None
+agari_hai = None
 g_tehai = [0]*40
 bakaze = 31
 jikaze = 31
+kan_list = []
+tsumo_flg = False
 
 def calcu_mentsu_fan(tehai,tsumo):
     """
@@ -458,6 +490,7 @@ def check_mentsu(i):
     global tmp_tehai
     global tmp_syanten
     global max_fan
+    global max_fu
 
     while(tmp_tehai[i] <= 0 and i <= 38):
         i += 1
@@ -467,6 +500,8 @@ def check_mentsu(i):
             fan,fu = check_yaku_mentsu()
             if fan > max_fan:
                 max_fan = fan
+            if fu > max_fu:
+                max_fu = fu
             return fan,fu
         else:
             return 0,0
@@ -497,6 +532,61 @@ def check_mentsu(i):
     check_mentsu(i+1)
 
 
+
+def calcu_fu(furo_flg):
+#符計算をする
+    global mentsu_num
+    global head
+    global furo
+    global kan_list
+    global bakaze
+    global jikaze
+    global tsumo_flg
+
+    yaochu_list = [1,9,11,19,21,29,31,32,33,34,35,36,37]
+
+    pon_list = [x[0] for x in furo if x[1]==0]
+    kan_list = [x[0] for x in furo if x[1]==2]
+
+    if furo_flg:
+        fu = 20
+    else:
+        fu = 30
+    for kouho in [x for x in mentsu if x[1]==0]:
+        #最低が2符
+        one_fu = 2
+        #ヤオチュウ牌なら２倍
+        if kouho[0] in yaochu_list:
+            one_fu *= 2
+        #カンしていたら4倍
+        if kouho[0] in kan_list:
+            one_fu *= 4
+        #暗刻なら2倍
+        if not kouho[0] in pon_list:
+            one_fu *= 2
+        #一つの候補を合計の符に足す
+        fu += one_fu
+    #頭が役牌なら+2
+    if head == bakaze:
+        fu += 2
+    if head == jikaze:
+        fu += 2
+    if head in [35,36,37]:
+        fu += 2
+    #ツモなら+2
+    if tsumo_flg:
+        fu += 2
+
+    #符は切り上げ
+    if fu%10 != 0:
+        fu += 10 - fu%10
+
+    return fu
+                
+
+
+
+
 """
 ************************************************************
 ************************************************************
@@ -515,25 +605,19 @@ def check_yaku_mentsu():
     global furo
     global mentsu
     global head
-    global g_tehai
 
     if debug_flg:
-        print("--------------------------")
-    #global変数の手牌を生成
-    g_tehai = make_tehai()
+        print("-------------------------------------")
 
     #フーロしているかどうか確認
     furo_flg = False
     if len(furo) > 0:
         furo_flg = True
 
-    #鳴いていたら20符、鳴いてなかったら30符
-    if furo_flg:
-        fu = 20
-    else:
-        fu = 30
+    #符計算
+    fu = calcu_fu(furo_flg)
+    #翻数は初期は0
     fan = 0
-    fu = 20
 
     #鳴きの有無に関係ない役
     #まずは役満
@@ -572,6 +656,9 @@ def check_yaku_mentsu():
     if is_mentsu_tanyao():
         fan += 1
 
+    #役牌(役牌の数だけ翻をプラス)
+    fan += get_mentsu_yakuhai()
+
     #面前の場合
     if not furo_flg:
         #九蓮宝燈
@@ -582,8 +669,11 @@ def check_yaku_mentsu():
         if is_mentsu_suanko():
             fan = 13
             return fan,fu
+        #二盃口
+        if is_mentsu_ryanpeiko():
+            fan += 3
         #一盃口
-        if is_mentsu_iipeiko():
+        elif is_mentsu_iipeiko():
             fan += 1
         #平和
         if is_mentsu_pinfu():
@@ -617,7 +707,7 @@ def check_yaku_mentsu():
         #三色同順
         if is_mentsu_sanshokudoujun():
             fan += 1
-        #チャンタ
+        #チャンタ系
         if is_mentsu_junchan():
             fan += 2
         elif is_mentsu_chanta():
@@ -631,6 +721,8 @@ def calcu_chiitoitsu_fan(tehai):
     七対子の翻数を計算する
     七対子でなりうる役：字一色、混老頭、清一色、混一色、タンヤオ
     """
+    if debug_flg:
+        print("七対子")
     fan = 2
     #字一色：役満のためこの時点で値を返す
     if is_chiitoitsu_tsuuiisou(tehai):
@@ -648,10 +740,7 @@ def calcu_chiitoitsu_fan(tehai):
 
     if is_chiitoitsu_tanyao(tehai):
         fan += 1
-
     return fan
-
-
 
 
 
@@ -740,8 +829,6 @@ def is_chiitoitsu(tehai):
     七対子かどうかのチェック
     """
     if len([x for x in tehai if x == 2]) == 7:
-        if debug_flg:
-            print("七対子")
         return True
     else:
         return False
@@ -763,16 +850,28 @@ def dora_check(tehai,dora,reach):
 
 
 
-def get_tokuten(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,tsumo=False,arg_tsumo_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None):
+def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
+    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=None,
+    double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False):
     """
     得点の計算をする。
     まずあがっているかチェックし、翻と符を計算。
     そこから点数を計算
+    未実装：リンシャン、はいてい、ほうてい、ちゃんかん、だぶりー、さんかんつ、てんほー、ちーほー
     """
     global furo
-    global tsumo_hai
+    global agari_hai
     global bakaze
     global jikaze
+    global g_tehai
+    global kan_list
+
+    #とりあえずデフォルト
+    fan = 0
+    fu = 20
+
+    #ツモフラグをセット
+    tsumo_flg = tsumo
 
     #場風と自風をセット
     bakaze = arg_bakaze
@@ -786,16 +885,38 @@ def get_tokuten(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaz
 
     #tehaiの形を40にかえる
     tehai = tehai_34to40(origin_tehai)
+    g_tehai = tehai[:]
 
-    #tsumo_haiとfuroはglobal変数として利用
+    #agari_haiとfuroとkanはglobal変数として利用
     furo = arg_furo
-    tsumo_hai = arg_tsumo_hai
+    agari_hai = arg_agari_hai
+    kan_list = kan
+
+    #フーロしているかどうか確認
+    furo_flg = False
+    if len(furo) > 0:
+        furo_flg = True
+
+    #天和かどうか
+    if tenho:
+        if debug_flg:
+            print("天和")
+        fan = 13
+        return fan,fu
+    #地和かどうか
+    if tenho:
+        if debug_flg:
+            print("地和")
+        fan = 13
+        return fan,fu
 
     #国士無双かどうか
-    if is_kokusi(tehai):
+    if not furo_flg and is_kokusi(tehai):
         fan = 13
-    #七対子かどうか(リャンペーコーどうする問題)
-    elif is_chiitoitsu(tehai):
+        return fan,fu
+
+    #七対子かどうか(リャンペーコーでないこと)
+    elif not furo_flg and is_chiitoitsu(tehai) and not is_mentsu_ryanpeiko(check=True):
         fan = calcu_chiitoitsu_fan(tehai)
         fu = 25
     #上記を除けばメンツ手
@@ -807,15 +928,41 @@ def get_tokuten(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaz
     #リーチであれば+1翻
     if reach:
         fan += 1
+        #ダブルリーチならさらに+1翻
+        if double_reach:
+            if debug_flg:
+                print("ダブル立直")
+            fan += 1
+        else:
+            print("立直")
     #一発であれば+1翻（リーチしていることも念のため条件に入れる）
     if ippatsu and reach:
+        if debug_flg:
+            print("一発")
+        fan += 1
+    #海底撈月なら+1
+    if haitei:
+        if debug_flg:
+            print("海底撈月")
+        fan += 1
+    #河底撈魚なら+1
+    if houtei:
+        if debug_flg:
+            print("河底撈魚")
+        fan += 1
+    #槍槓なら+1
+    if chankan:
+        if debug_flg:
+            print("槍槓")
         fan += 1
     #面前でつもれば+1翻
     if furo == None and tsumo:
+        if debug_flg:
+            print ("門前清模和")
         fan += 1
 
-    print str(fan) + "翻"
-    print str(fu) + "符"
+    print (str(fan) + "翻")
+    print (str(fu) + "符")
 
     #上記の役がつかず翻が0であれば役なし。0点として返す
     if fan == 0:
@@ -824,12 +971,14 @@ def get_tokuten(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaz
     elif not dora == None and fan < 13:
         fan += dora_check(tehai,dora,reach)
 
+    return fan,fu
 
-    #最後に符と翻から点数を計算
-    tokuten = fan*1000
+def get_tokuten(fan,fu,tsumo=False,oya=False):
+#翻数と符から得点を計算する
+    tokuten = [fan * 1000,0,0,0]
+
 
     return tokuten
-
 
 
 #計算しやすさから手牌を0~33ではなく0~37にかえる
@@ -853,11 +1002,14 @@ def tehai_34to40(tehai):
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
-    tehai = [11,12,13,21,22,23,1,2,3,7,8,9,19,19]
+    tehai = [11,11,12,12,13,13,32,32,32,16,17,18,33,33]
     #furo = [[3,1],[35,0]]
-    furo = [[11,1]]
-    #furo = []
+    #furo = [[16,1]]
+    tsumo = 11
+    
+    furo = []
 
     tehai_hist = mj_util.get_hist(tehai)
-    tokuten = get_tokuten(tehai_hist,arg_furo=furo)
+    fan,fu = get_fan_fu(tehai_hist,arg_furo=furo,arg_agari_hai=tsumo)
+    tokuten = get_tokuten(fan,fu,oya=False)
     #print "tokuten = " + str(syanten)
