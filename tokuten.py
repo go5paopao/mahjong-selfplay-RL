@@ -4,6 +4,7 @@ import numpy as np
 sys.path.append('/usr/local/lib/python2.7/site-packages')
 import mj_util
 import syanten
+import time
 
 
 """
@@ -78,11 +79,22 @@ def is_mentsu_tsuiitou():
 def is_mentsu_suanko():
 #メンツが四暗刻かどうか(鳴いていないことが前提)
     global mentsu
+    global head
+    global tsumo_flg
+    global agari_hai
+
     if all(x == 0 for x in mentsu[:,1]):
-        print(mentsu)
-        if debug_flg:
-            print("四暗刻")
-        return True
+        if tsumo_flg:
+            if debug_flg:
+                print("四暗刻")
+            return True
+        else:
+            if agari_hai == head:
+                if debug_flg:
+                    print("四暗刻単騎")
+                return True
+            else:
+                return False
     else:
         return False
 
@@ -104,6 +116,21 @@ def is_mentsu_chinroutou():
         return False
 
 
+def is_mentsu_sukantsu():
+#スーカンツかどうか
+    global kan_list
+    if len(kan_list) == 4:
+        if debug_flg:
+            print "四槓子" 
+        return True
+
+def is_mentsu_sankantsu():
+#三カンツかどうか
+    global kan_list
+    if len(kan_list) == 3:
+        if debug_flg:
+            print "三槓子" 
+        return True
 
 def is_mentsu_daisushi():
 #メンツが大四喜和かどうか
@@ -173,16 +200,23 @@ def is_mentsu_sananko():
 #メンツが三暗刻かどうか
     global mentsu
     global furo
+    global agari_hai
+    global tsumo_flg
     anko_num = 0
-    #for x in mentsu:
-    #    if x[1] == 0 and x[0] in furo[:,0]:
-    #        anko_num += 1
-
-
-    if len([x for x in mentsu if x[1] == 0 and not x[0] in [y[0] for y in furo if y[1] == 0]]) == 3:
+    furo_list = [x[0] for x in furo]
+    for x in mentsu:
+        if x[1] == 0 and not x[0] in furo_list:
+            if not tsumo_flg:
+                if agari_hai != x[0]:
+                    anko_num += 1
+            else:
+                anko_num += 1
+    #anko_kouho = [x for x in mentsu if x[1] == 0 and not x[0] in [y[0] for y in furo if y[1] == 0]]
+    #あがり牌が暗刻のものでなければ
+    if anko_num == 3:
         if debug_flg:
             print "三暗刻" 
-            return True
+        return True
     else:
         return False
 
@@ -191,6 +225,13 @@ def is_mentsu_sananko():
 def is_mentsu_toitoi():
 #メンツがトイトイかどうか
     global mentsu
+    if all(x == 0 for x in mentsu[:,1]):
+        if debug_flg:
+            print "対々和"
+        return True
+    else:
+        return False
+
 
 def is_mentsu_ikkitsuukan():
 #メンツが一気通貫かどうか
@@ -542,6 +583,7 @@ def calcu_fu(furo_flg):
     global bakaze
     global jikaze
     global tsumo_flg
+    global agari_hai
 
     yaochu_list = [1,9,11,19,21,29,31,32,33,34,35,36,37]
 
@@ -561,9 +603,13 @@ def calcu_fu(furo_flg):
         #カンしていたら4倍
         if kouho[0] in kan_list:
             one_fu *= 4
-        #暗刻なら2倍
+        #暗刻なら2倍(ロンを除く必要あり)
         if not kouho[0] in pon_list:
-            one_fu *= 2
+            if tsumo_flg:
+                one_fu *= 2
+            elif not agari_hai == kouho[0]:
+                one_fu *= 2
+
         #一つの候補を合計の符に足す
         fu += one_fu
     #頭が役牌なら+2
@@ -639,6 +685,9 @@ def check_yaku_mentsu():
     if is_mentsu_daisangen():
         fan = 13
         return fan,fu
+    if is_mentsu_sukantsu():
+        fan = 13
+        return fan,fu
 
     #小三元
     if is_mentsu_shousangen():
@@ -648,8 +697,16 @@ def check_yaku_mentsu():
     if is_mentsu_sananko():
         fan += 2
 
+    #三槓子
+    if is_mentsu_sankantsu():
+        fan += 2
+
     #三色同刻
     if is_mentsu_sanshokudoukou():
+        fan += 2
+
+    #対々和
+    if is_mentsu_toitoi():
         fan += 2
 
     #タンヤオ（とりあえず喰いタンありの前提）
@@ -857,7 +914,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
     得点の計算をする。
     まずあがっているかチェックし、翻と符を計算。
     そこから点数を計算
-    未実装：リンシャン、はいてい、ほうてい、ちゃんかん、だぶりー、さんかんつ、てんほー、ちーほー
+    未実装：さんかんつ、スーカンツ
     """
     global furo
     global agari_hai
@@ -966,7 +1023,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
 
     #上記の役がつかず翻が0であれば役なし。0点として返す
     if fan == 0:
-        return 0
+        return fan,fu
     #役があればドラの数だけ翻数を増やす
     elif not dora == None and fan < 13:
         fan += dora_check(tehai,dora,reach)
@@ -1000,16 +1057,25 @@ def tehai_34to40(tehai):
 
 
 if __name__ == "__main__":
-    #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
+    
+    tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31,31]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
-    tehai = [11,11,12,12,13,13,32,32,32,16,17,18,33,33]
+    #tehai = [3,3,4,4,5,5,13,14,15,23,24,25,29,29]
     #furo = [[3,1],[35,0]]
     #furo = [[16,1]]
-    tsumo = 11
+    agari = 31
     
     furo = []
 
+    #時間の計測
+    start = time.time()
+
     tehai_hist = mj_util.get_hist(tehai)
-    fan,fu = get_fan_fu(tehai_hist,arg_furo=furo,arg_agari_hai=tsumo)
+    fan,fu = get_fan_fu(tehai_hist,arg_furo=furo,arg_agari_hai=agari,tsumo=False,reach=True
+        )
     tokuten = get_tokuten(fan,fu,oya=False)
+
+    #時間の計測
+    elapsed_time = time.time() - start
+    print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
     #print "tokuten = " + str(syanten)
