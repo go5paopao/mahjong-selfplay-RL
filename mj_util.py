@@ -11,6 +11,17 @@ def get_hist(tehai):
         tehai_hist[tehai[i]] += 1
     return tehai_hist
 
+#牌を34枚型から40枚型に変える
+def hai34to40(hai):
+    if hai < 9:
+        return hai+1
+    elif hai < 18:
+        return hai+2
+    elif hai < 27:
+        return hai+3
+    else:
+        return hai+4
+
 
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]

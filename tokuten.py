@@ -52,13 +52,11 @@ def is_mentsu_churenpoutou():
     global g_tehai
     least_hai = [3,1,1,1,1,1,1,1,3]
     for i in range(3):
-        for j in range(9):
-            if not g_tehai[i*10+j+1] >= least_hai[j]:
-                return False
-    #あがっている前提なので、残り１枚が何かはみない
-    if debug_flg:
-        print("九蓮宝燈")
-    return True
+        if all(g_tehai[i*10+j+1] >= least_hai[j] for j in range(9)):
+            if debug_flg:
+                print("九蓮宝燈")
+            return True
+    return False
 
 
 def is_mentsu_tsuiitou():
@@ -579,7 +577,6 @@ def calcu_fu(furo_flg):
     global mentsu_num
     global head
     global furo
-    global kan_list
     global bakaze
     global jikaze
     global tsumo_flg
@@ -588,7 +585,6 @@ def calcu_fu(furo_flg):
     yaochu_list = [1,9,11,19,21,29,31,32,33,34,35,36,37]
 
     pon_list = [x[0] for x in furo if x[1]==0]
-    kan_list = [x[0] for x in furo if x[1]==2]
 
     if furo_flg:
         fu = 20
@@ -738,6 +734,9 @@ def check_yaku_mentsu():
         #三色同順
         if is_mentsu_sanshokudoujun():
             fan += 2
+        #一気通貫
+        if is_mentsu_ikkitsuukan():
+            fan += 2
         #染め手
         #チンイツ
         if is_mentsu_chinitsu():
@@ -749,6 +748,8 @@ def check_yaku_mentsu():
         #チャンタ
         if is_mentsu_junchan():
             fan += 3
+        elif is_mentsu_honroutou():
+            fan += 2
         elif is_mentsu_chanta():
             fan += 2
 
@@ -764,8 +765,13 @@ def check_yaku_mentsu():
         #三色同順
         if is_mentsu_sanshokudoujun():
             fan += 1
+        #一気通貫
+        if is_mentsu_ikkitsuukan():
+            fan += 1   
         #チャンタ系
         if is_mentsu_junchan():
+            fan += 2
+        elif is_mentsu_honroutou():
             fan += 2
         elif is_mentsu_chanta():
             fan += 1
@@ -908,7 +914,7 @@ def dora_check(tehai,dora,reach):
 
 
 def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
-    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=None,
+    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=[],
     double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False):
     """
     得点の計算をする。
@@ -983,7 +989,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
     #以下、共通的な処理
 
     #リーチであれば+1翻
-    if reach:
+    if reach and fan < 13:
         fan += 1
         #ダブルリーチならさらに+1翻
         if double_reach:
@@ -1013,7 +1019,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
             print("槍槓")
         fan += 1
     #面前でつもれば+1翻
-    if furo == None and tsumo:
+    if len(furo) == 0 and tsumo:
         if debug_flg:
             print ("門前清模和")
         fan += 1
@@ -1033,6 +1039,19 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
 def get_tokuten(fan,fu,tsumo=False,oya=False):
 #翻数と符から得点を計算する
     tokuten = [fan * 1000,0,0,0]
+    kihonten = 0
+
+    if fan >= 13:
+        kihonten = 8000
+    elif fan >= 11:
+        kihonten = 6000
+    elif fan >= 8:
+        kihonten = 4000
+    elif fan >= 6:
+        kihonten = 3000
+    elif fan >= 5:
+        kihonten = 2000
+        
 
 
     return tokuten
@@ -1057,22 +1076,24 @@ def tehai_34to40(tehai):
 
 
 if __name__ == "__main__":
-    
-    tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31,31]
+
+    tehai = [1,2,3,4,5,6,7,8,9,22,23,24,31,31]    
+    #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,33,33]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
     #tehai = [3,3,4,4,5,5,13,14,15,23,24,25,29,29]
     #furo = [[3,1],[35,0]]
     #furo = [[16,1]]
     agari = 31
     
+    #furo = [[1,0],[9,0]]
     furo = []
+    kan = [1,9,11]
 
     #時間の計測
     start = time.time()
 
     tehai_hist = mj_util.get_hist(tehai)
-    fan,fu = get_fan_fu(tehai_hist,arg_furo=furo,arg_agari_hai=agari,tsumo=False,reach=True
-        )
+    fan,fu = get_fan_fu(tehai_hist,arg_furo=furo,arg_agari_hai=agari,tsumo=True,reach=True)
     tokuten = get_tokuten(fan,fu,oya=False)
 
     #時間の計測
