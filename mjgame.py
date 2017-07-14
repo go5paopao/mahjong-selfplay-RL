@@ -11,10 +11,10 @@ import random
 
 
 class MjPlayer():
-    """
-    プレイヤー情報を定義するクラス
-    各プレイヤーはこのクラスを継承する
-    """    
+"""
+プレイヤー情報を定義するクラス
+各プレイヤーはこのクラスを継承する
+"""    
     def set_tehai(tehai):
         self.tehai = tehai
 
@@ -33,72 +33,54 @@ class MjPlayer():
 
 
 class MjHai():
-    """
-    麻雀の牌情報を管理するクラス
-    """
+"""
+麻雀の牌情報を管理するクラス
+"""
     def __init__(self):
         #山の生成
-        self.make_yama()
+        make_yama()
         #ワン牌の作成
-        self.make_wanpai()
+        make_wanpai()
         #次に引く牌のカーソル
         self.cursor = 0
         #リンシャン牌のカーソル
         self.rinshan_cursor = 0
         #ドラの生成
-        self.init_dora()
+        init_dora()
         #手牌の生成（まずは13枚ずつ）
-        self.make_haipai()
+        make_haipai()
 
-    def make_yama(self):
-        self.yama = [mj_util.hai34to40(x) for x in range(34) for i in range(4)]
-        #self.yama = np.random.permutation(init_yama)
-        random.shuffle(self.yama)
+    def make_yama():
+        init_yama = [mj_util.hai34to40(x) for x in range(34) for i in range(4)]
+        self.yama = np.random.permutation(init_yama)
 
-    def make_wanpai(self):
-        self.wanpai = self.yama[-14:]
+    def make_wanpai():
+        wanpai = self.yama[-14:]
         del self.yama[-14:]
 
-    def make_haipai(self):
-        self.tehai = [0]*4
+    def make_haipai():
+        self.tehai = []*4
         for i in range(4):
             self.tehai[i] = [x for x in self.yama[self.cursor:self.cursor+13]]
             self.cursor += 13
 
-    #ドラ表示用に次の牌を返す
-    def next_hai(self,hai):
-        if hai < 30:
-            if hai%10 == 9:
-                hai += -8
-            else:
-                hai += 1
-        else:
-            if hai == 34:
-                hai = 31
-            elif hai == 37:
-                hai = 35
-            else:
-                hai += 1
-        return hai
-
-
-    def init_dora(self):
-        self.dora = [self.next_hai(self.wanpai[8])]
-        self.uradora = [self.next_hai(self.wanpai[9])]
+    def init_dora():
+        self.dora = [self.wanpai[8]]
+        self.uradora = [self.wanpai[9]]
 
     #カンドラを開いたとき
-    def open_dora(self):
+    def open_dora():
         self.dora.append(self.wanpai[8-len(self.dora)*2])
         self.uradora.append(self.wanpai[9-len(self.dora)*2])
 
     #リンシャン牌を引く
-    def get_rinshan_hai(self):
+    def get_rinshan_hai():
         rinshan_hai = self.wanpai[-1-self.rinshan_cursor]
         rinshan_cursor += 1
         return rinshan_hai
 
     #山から牌を１枚引く
-    def get_tsumo_hai(self):
+    def get_tsumo_hai():
         tsumo_hai = self.yama[self.cursor]
         self.cursor += 1
         return tsumo_hai
@@ -114,9 +96,9 @@ class MjHai():
 
 
 class MjTable():
-    """
-    麻雀の卓情報を定義するクラス
-    """
+"""
+麻雀の卓情報を定義するクラス
+"""
     def __init__(self,game_style=0):
         #ゲームの種類 0:東風 1:半荘
         self.game_style = game_style
@@ -133,7 +115,7 @@ class MjTable():
         #親が誰か
         self.oya = 0
 
-    def new_kyoku(self):
+    def new_kyoku():
         #３局までなら局を進め、４局なら場風が変わる
         if self.kyoku < 3:
             self.kyoku += 1
@@ -143,7 +125,7 @@ class MjTable():
 
     #あがりのときの情報更新
     #tokutenは各プレイヤーの得点の増減[p1,p2,p3,p4]
-    def agari_update(self,agari_point):
+    def agari_update(agari_point):
         new_kyoku()
         #本場、供託棒もリセット
         self.honba = 0
@@ -155,24 +137,23 @@ class MjTable():
 
     #流局時の情報更新
     #引数は４人がテンパイかどうか(boolean)のリスト
-    def ryukyoku_update(self,tenpai_list):
+    def ryukyoku_update(tenpai_list):
         #本場が増える
         self.honba += 1
         #親がテンパイでなければ局を進める
         if tenpai_list[oya] == False:
             new_kyoku()
         #テンパイの人数で処理を変える
-        tenpai_num = tenpai_list.count(True)
-
+        tenpai_num = tenpai_list.count(True):
         if tenpai_num == 1:
-            self.point = [self.point[i]+3000 if tenpai_list[i] == True else self.point[i]-1000 for i in range(4)]
+            self.point = [self.point[i]+3000 if tenpai_list[i] == True else self.point[i]-1000 if tenpai_list[i] == False for i in range(4)]
         elif tenpai_num == 2:
-            self.point = [self.point[i]+1500 if tenpai_list[i] == True else self.point[i]-1500 for i in range(4)]
+            self.point = [self.point[i]+1500 if tenpai_list[i] == True else self.point[i]-1500 if tenpai_list[i] == False for i in range(4)]
         elif tenpai_num == 3:
-            self.point = [self.point[i]+1000 if tenpai_list[i] == True else self.point[i]-3000 for i in range(4)]
+            self.point = [self.point[i]+1000 if tenpai_list[i] == True else self.point[i]-3000 if tenpai_list[i] == False for i in range(4)]
 
     #局情報をリセット 
-    def reset(self):
+    def reset():
         self.bakaze = 0
         self.kyoku = 0
         self.honba = 0
@@ -186,6 +167,7 @@ class MjTable():
 def main():
     mj_table = MjTable()
     mj_hai = MjHai()
+
 
 
 
