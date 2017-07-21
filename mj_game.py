@@ -15,17 +15,19 @@ class MjPlayer():
     プレイヤー情報を定義するクラス
     各プレイヤーはこのクラスを継承する
     """    
-    def set_tehai(tehai):
+    def set_tehai(self,tehai):
         self.tehai = tehai
 
-    def set_point(point):
+    def set_point(self,point):
         self.point = point
 
     #デフォルトはランダムに牌を切る
-    def nanikiru():
+    def nanikiru(self):
         if len(self.tehai) != 14:
             print "don't have 14 hai"
         select = random.choice(self.tehai)
+        return select
+
 
 
 
@@ -49,6 +51,8 @@ class MjHai():
         self.init_dora()
         #手牌の生成（まずは13枚ずつ）
         self.make_haipai()
+        #捨て牌情報
+        self.sutehai = [[],[],[],[]]
 
     def make_yama(self):
         self.yama = [mj_util.hai34to40(x) for x in range(34) for i in range(4)]
@@ -98,10 +102,46 @@ class MjHai():
         return rinshan_hai
 
     #山から牌を１枚引く
-    def get_tsumo_hai(self):
+    def get_tsumo_hai(self,turn):
         tsumo_hai = self.yama[self.cursor]
         self.cursor += 1
+        self.tehai[turn].append(tsumo_hai)
         return tsumo_hai
+
+    #打牌(turn番目のプレイヤーがhaiを切る)
+    def dahai(self,turn,hai):
+        for i in range(14):
+            if self.tehai[turn][i] == hai:
+                #13番目の牌と入れ替え
+                self.tehai[turn][i],self.tehai[turn][13] = self.tehai[turn][13],self.tehai[turn][i]
+                del self.tehai[turn][13]
+                break
+
+    #山に残り牌があるかチェック
+    def check_yama(self):
+        if self.cursor > len(self.yama)-1:
+            return True
+        else:
+            return False
+
+    #場況を表示する（具体的には各プレイヤーの手牌
+    def show_bakyo(self):
+        for i in range(4):
+            tehai_str = ""
+            for hai in sorted(self.tehai[i]):
+                tehai_str += "[" + mj_util.hai_str(hai) + "]"
+            print ("player[{0}]: {1}".format(i,tehai_str))
+
+    #ドラを表示
+    def show_dora(self):
+        show_str = "ドラ:"
+        for i in range(len(self.dora)):
+            show_str += "[" + mj_util.hai_str(self.dora[i]) + "]"
+        print show_str
+
+
+
+
 
 
 
@@ -132,6 +172,54 @@ class MjTable():
         self.point = [25000]*4
         #親が誰か
         self.oya = 0
+        #誰のツモ番か
+        self.turn = self.oya
+        #ゲームが続いているかどうか
+        self.playing_flg = True
+        #局が続いているかどうか
+        self.kyoku_playing_flg = True
+
+    #プレイヤー情報をセットする
+    def set_player(self,player_list):
+        self.player = player_list
+
+
+    #ゲームが終了したかを判断する
+    #一旦サドンデスはなし
+    def check_game_end(self):
+        if self.game_style < self.bakaze:
+            print("対局終了")
+            return True
+        else:
+            return False
+
+
+    #局が終わったときに呼ばれる。
+    def end_kyoku(self,agari_player=-1):
+        #誰かの点棒が箱割れしたら飛び終了
+        if any(point < 0 for point in self.point):
+            print ("飛び終了")
+            self.playing_flg = False
+
+        #親が上がっていたら、連チャン
+        if self.oya == agari_player:
+            print("連荘です")
+            #供託棒はリセット、本場は増える
+            self.table_reach = 0
+            self.honba += 1
+
+        else:
+            print("親が変わります")
+            #本場、供託棒もリセット
+            self.honba = 0
+            self.table_reach = 0
+            #局を進める
+            new_kyoku()
+
+
+
+
+        #if self.game_style == self.bakaze and self.kyoku == 3:
 
     def new_kyoku(self):
         #３局までなら局を進め、４局なら場風が変わる
@@ -143,15 +231,14 @@ class MjTable():
 
     #あがりのときの情報更新
     #tokutenは各プレイヤーの得点の増減[p1,p2,p3,p4]
-    def agari_update(self,agari_point):
-        new_kyoku()
-        #本場、供託棒もリセット
-        self.honba = 0
-        self.table_reach = 0
+    def agari_update(self,agari_point,agari_player=-1):
         #得点の増減を行う
         if len(agari_point) != 4:
             print ("error")
         self.point = [a+b for a,b in zip(self.point,agari_point)]
+
+        #局を終了させる
+        self.end_kyoku(agari_player=agari_player)
 
     #流局時の情報更新
     #引数は４人がテンパイかどうか(boolean)のリスト
@@ -159,8 +246,10 @@ class MjTable():
         #本場が増える
         self.honba += 1
         #親がテンパイでなければ局を進める
-        if tenpai_list[oya] == False:
-            new_kyoku()
+        if tenpai_list[self.oya] == False:
+            self.new_kyoku()
+        else:
+            self.honba += 1
         #テンパイの人数で処理を変える
         tenpai_num = tenpai_list.count(True)
 
@@ -177,15 +266,92 @@ class MjTable():
         self.kyoku = 0
         self.honba = 0
         self.table_reach = 0
-        self.point = [25000]*4        
+        self.point = [25000]*4
+
+    #次の人の番に回す
+    def next_turn(self):
+        self.turn += 1
+        if self.turn == 4:
+            self.turn = 0
+
+    #点棒を表示
+    def show_point(self):
+        for i  in range(4):
+            print("player[" + str(i) + "]: " + str(self.point[i]))
+
+    #局開始時の場況を表示
+    def show_game_status(self):
+        kaze_str = ["東","南","西","北"]
+        print ("{0}{1}局:{2}本場".format(kaze_str[self.bakaze],self.kyoku+1,self.honba))
+        self.show_point()
+
 
 
 
 
 
 def main():
-    mj_table = MjTable()
-    mj_hai = MjHai()
+    PLAY_NUM = 1 #ゲーム実行回数
+
+    #ゲームプレイヤーをセット
+    player_1 = MjPlayer()
+    player_2 = MjPlayer()
+    player_3 = MjPlayer()
+    player_4 = MjPlayer()
+    players = [player_1,player_2,player_3,player_4]
+
+
+    for play in range(PLAY_NUM):
+        print("{0}th game start".format(play))
+        mj_table = MjTable()
+        #プライヤー情報をmj_tableにセット
+        mj_table.set_player(players)
+        #ゲームが終わるまでループ
+        while(mj_table.playing_flg):
+            #牌の初期化
+            mj_hai = MjHai()
+            kyoku_turn = 0
+            mj_table.new_kyoku()
+            #局開始時の場況を表示（デバッグ用）
+            mj_table.show_game_status()
+            mj_hai.show_dora()
+            #局が続く限りループ
+            while mj_table.kyoku_playing_flg:
+                turn = mj_table.turn
+                print("プレイヤー{0}の番です。".format(turn+1))
+                tsumo_hai = mj_hai.get_tsumo_hai(turn)
+                print("{0}をツモ".format(mj_util.hai_str(tsumo_hai)))
+                #playerに手牌をセット
+                players[turn].set_tehai(mj_hai.tehai[turn])
+                #あがっているかチェック
+                if syanten.get_syanten(mj_hai.tehai[turn]) == -1:
+                    print "ツモ" 
+                    tokuten = tokuten.get(mj_hai.tehai[turn])
+                    mj_table.agari_update(tokuten)
+                    mj_table.next_kyoku(agari_player=turn)
+                #何切る
+                select_hai = players[turn].nanikiru()
+                print("{0}を切ります".format(mj_util.hai_str(select_hai)))
+                mj_hai.dahai(turn,select_hai)
+
+                #場況を表示（デバッグ用）
+                mj_hai.show_bakyo()
+
+                #流局かどうかをチェック
+                if mj_hai.check_yama():
+                    print("********************************************")
+                    print("流局")
+                    print("********************************************")
+                    #テンパイしているかどうかを判定し、その情報をryukyoku_updateに渡す
+                    tenpai_list = [True if syanten.get_syanten(mj_hai.tehai[x]) == 0 else False for x in range(4)]
+                    mj_table.ryukyoku_update(tenpai_list)
+                    break
+                mj_table.next_turn()
+            #ゲームが終了したかチェック
+            if mj_table.check_game_end():
+                break
+
+
 
 
 

@@ -6,8 +6,13 @@ import mj_util
 
 
 def get_syanten(origin_tehai):
+    #tehaiが14枚の形なら40に変える
+    if len(origin_tehai) == 14 or 13:
+    	tehai = [0]*40
+    	for hai in origin_tehai:
+    		tehai[hai] += 1    	
     #tehaiの形を40にかえる
-    if len(origin_tehai) == 34:
+    elif len(origin_tehai) == 34:
         tehai = tehai_34to40(origin_tehai)
     else:
         tehai = origin_tehai

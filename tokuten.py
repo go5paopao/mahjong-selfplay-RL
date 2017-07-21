@@ -1036,9 +1036,11 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
 
     return fan,fu
 
-def get_tokuten(fan,fu,tsumo=False,oya=False):
+def get_tokuten(fan,fu,tsumo=False,oya=False,player=0):
 #翻数と符から得点を計算する
-    tokuten = [fan * 1000,0,0,0]
+#得点は４人分のリスト形式
+    tokuten = [0]*4
+    tokuten[player] = fan*1000
     kihonten = 0
 
     if fan >= 13:
@@ -1051,8 +1053,6 @@ def get_tokuten(fan,fu,tsumo=False,oya=False):
         kihonten = 3000
     elif fan >= 5:
         kihonten = 2000
-        
-
 
     return tokuten
 
@@ -1071,6 +1071,20 @@ def tehai_34to40(tehai):
     for i in range(27,34):
         tehai_40[i+4] = tehai[i]
     return tehai_40
+
+
+
+def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
+    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=[],
+    double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False,oya=False):
+    tehai_hist = mj_util.get_hist(tehai)
+    fan,fu = get_fan_fu(tehai_hist,reach=reach,kyoku=kyoku,honba=honba,arg_bakaze=arg_bakaze,arg_jikaze=arg_jikaze,
+    tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
+    double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
+
+    tokuten = get_tokuten(fan,fu,oya=oya)
+
+    return tokuten
 
 
 

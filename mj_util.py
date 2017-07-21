@@ -22,6 +22,21 @@ def hai34to40(hai):
     else:
         return hai+4
 
+#牌番号から牌の文字を返す
+def hai_str(hai):
+    hai_str = ""
+    jihai = ["東","南","西","北","白","発","中"]
+
+    if hai < 10:
+        hai_str = "{0}m".format(hai)
+    elif hai < 20:
+        hai_str = "{0}p".format(hai-10)
+    elif hai < 30:
+        hai_str = "{0}s".format(hai-20)
+    else:
+        hai_str = jihai[hai-31]
+    return hai_str
+
 
 if __name__ == "__main__":
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
@@ -29,3 +44,6 @@ if __name__ == "__main__":
     tehai_hist = get_hist(tehai)
     syanten = get_syanten(tehai_hist)
     print ("syanten = " + str(syanten))
+
+
+
