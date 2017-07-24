@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
 import sys
 import numpy as np
+import mj_game
 sys.path.append('/usr/local/lib/python2.7/site-packages')
-import mj_util
+
+
+
 
 
 def get_syanten(origin_tehai):
-    #tehaiが14枚の形なら40に変える
-    if len(origin_tehai) in [13,14]:
-        tehai = [0]*40
-        for i in range(len(origin_tehai)):
-            tehai[origin_tehai[i]] += 1 
+
     #tehaiの形を40にかえる
-    elif len(origin_tehai) == 34:
-        tehai = tehai_34to40(origin_tehai)
-    else:
-        tehai = origin_tehai[:]
+    tehai = tehai_34to40(origin_tehai)
 
     #国士無双のシャンテン数を計算
     kokusi_syanten = get_syanten_kokusi(tehai)
     #print "kokusi: " + str(kokusi_syanten)
+    
     #七対子のシャンテン数を計算
     chiitoitu_syanten = get_syanten_chiitoitu(tehai)
     #print "chiitoitu: " + str(chiitoitu_syanten)
+
     #メンツ手のシャンテン数を計算
     mentu_syanten = get_syanten_mentu(tehai)
-    #print ("mentu: " + str(mentu_syanten))
+    #print "mentu: " + str(mentu_syanten)
+
     #最も小さいシャンテン数を結果とする
     syanten = min(kokusi_syanten,chiitoitu_syanten,mentu_syanten)
     #print "syanten: " + str(syanten)
+
     return syanten
 
 
@@ -48,7 +48,7 @@ def get_syanten_mentu(origin_tehai):
     global tmp_tehai
 
     if 'numpy' in str(type(origin_tehai)):
-        tmp_tehai = origin_tehai.copy()
+        tmp_tehai = origin_tehai.copy()    
     if isinstance(origin_tehai,list):
         tmp_tehai = origin_tehai[:]
 
@@ -74,12 +74,15 @@ def get_syanten_mentu(origin_tehai):
 
 
 
+
 def check_mentu(i):
+
     global min_mentu_syanten
     global mentu
     global toitu
     global kouho
     global tmp_tehai
+
 
     while(tmp_tehai[i] <= 0 and i <= 38):
         i += 1
@@ -95,7 +98,7 @@ def check_mentu(i):
         check_mentu(i)
         tmp_tehai[i] += 3
         mentu -= 1
-
+        
     if check_shuntu(tmp_tehai,i):
         tmp_tehai[i] -= 1
         tmp_tehai[i+1] -= 1
@@ -122,11 +125,7 @@ def check_taatu(i):
         i += 1
 
     if i >= 38:
-
-        if mentu == 4:
-            tmp = 8 - mentu*2 - toitu
-        else:
-            tmp = 8 - mentu*2 - kouho - toitu
+        tmp = 8 - mentu*2 - kouho - toitu
         if tmp < min_mentu_syanten:
             min_mentu_syanten = tmp
         return
@@ -174,7 +173,7 @@ def check_taatu(i):
 
 
 
-#国士無双のシャンテン数を求める
+#国士無双のシャンテン数を求める       
 def get_syanten_kokusi(tehai):
     yaochu_list = [1,9,11,19,21,29,31,32,33,34,35,36,37]
     kokusi_syanten = 14
@@ -217,15 +216,15 @@ def tehai_34to40(tehai):
 def agari_check(tehai,monte_flg = False):
 # あがりの判定
     agarihantei = False
-    agari_hai = [0] * 34
+    agari_hai = [0] * 40
     # 手牌の枚数を牌種ごとにカウント→今回はtehaiがカウントされたものなので変更
     if 'numpy' in str(type(tehai)):
-        counter = tehai.copy()
+        counter = tehai.copy()    
     if isinstance(tehai,list):
         counter = tehai[:]
     # 各牌について対子かどうか判定
     for i in range(len(counter)):
-        agari_hai = [0] * 34
+        agari_hai = [0] * 40
         # カウンタを保持
         tmp = countpai(counter) # tmp=counterとすると上手くいかない
         original_tmp_sum = sum(tmp)
@@ -239,7 +238,7 @@ def agari_check(tehai,monte_flg = False):
                     tmp[j] += -3 #刻子を除去
                     agari_hai[j] += 3
                 else:
-                    continue
+                    continue                    
         # 順子の判定
             for k in range(len(counter)-7): #字牌の処理は不要
                 if check_shuntu(tmp,k):
@@ -258,7 +257,7 @@ def agari_check(tehai,monte_flg = False):
             continue
     if monte_flg == False:
         if agarihantei == True:
-            print ('Agari!!!!!!!!!')
+            #print 'Agari!!!!!!!!!'
             return True
         else:
             #print 'No-ten'
@@ -275,14 +274,14 @@ def agari_check(tehai,monte_flg = False):
 
 def countpai(tehai):
     if 'numpy' in str(type(tehai)):
-        counter = tehai.copy()
+        counter = tehai.copy()    
     if isinstance(tehai,list):
         counter = tehai[:]
     return counter
 
 def check_head(headcounter,i):
 # 対子かどうかの判定
-    if headcounter[i] >= 2:
+    if headcounter[i] >= 2: 
         return True
     else:
         return False
@@ -313,7 +312,7 @@ def check_toitu(counter,i):
 def check_ryanmen(counter,i):
     #両面
     if i > 30:
-        return False
+        return False    
     if counter[i] >= 1 and counter[i+1] >= 1 and i < 30 and i%10 < 9 and i%10 > 1:
         return True
     else:
@@ -338,9 +337,73 @@ def check_penchan(counter,i):
         return False
 
 
-if __name__ == "__main__":
-    #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,31]
-    tehai = [31,31,31,32,32,32,33,33,33,34,34,34,11,12]
-    tehai_hist = mj_util.get_hist(tehai)
-    syanten = get_syanten(tehai_hist)
-    print ("syanten = " + str(syanten))
+
+#モンテカルロ法を実施
+def monte_execute(tehai,yama,cursor):
+    origin_tehai = get_hist40(tehai)
+    hai_score = [0] * 40
+    loop_num = 50
+    for play_num in range(loop_num):
+        if len(yama[cursor:]) == 0:
+            dahai = np.random.choice([x for x in range(len(origin_tehai)) if origin_tehai[x] > 0])
+            return dahai
+        #山をランダムに生成
+        monte_yama = np.random.choice(yama[cursor:],min(10,len(yama[cursor:])),replace=False)
+        #print monte_yama
+        monte_tehai = origin_tehai[:]
+        for i in range(len(monte_yama)):
+            monte_tehai[monte_yama[i]] += 1
+        #上がれるかどうかチェック
+        agari_flg, agari_hai = agari_check(monte_tehai,monte_flg=True)
+        if agari_flg:
+            for i in range(len(hai_score)):
+                if agari_hai[i] > 0 and origin_tehai[i] > 0: hai_score[i] += 1
+
+    #スコアが低い牌を打牌とする
+    dahai = 0
+    #min_score = max(hai_score)
+    min_score = 99999999
+    for i in range(len(hai_score)):
+        if hai_score[i] < min_score and origin_tehai[i] != 0:
+            min_score = hai_score[i]
+            dahai = i
+    #print hai_score
+    #print "dahai:" + str(dahai)
+    return dahai
+
+
+
+#手牌をヒストグラム型にかえる
+def get_hist(tehai):
+    tehai_hist = [0]*34
+    for i in range(len(tehai)):
+        tehai_hist[tehai[i]] += 1
+    return tehai_hist
+
+#手牌を40型のヒストグラム型にかえる
+def get_hist40(tehai):
+    tehai_hist = [0]*40
+    for i in range(len(tehai)):
+        tehai_hist[tehai[i]] += 1
+    return tehai_hist
+
+
+
+class Player_Monte(mj_game.MjPlayer):
+
+    def set_yama(self,yama,cursor):
+        self.yama = yama
+        self.cursor = cursor
+
+
+    def nanikiru(self
+        ):
+        if len(self.tehai) != 14:
+            print "don't have 14 hai"
+        select = monte_execute(self.tehai,self.yama,self.cursor)
+        return select
+
+
+
+
+

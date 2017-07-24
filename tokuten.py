@@ -914,7 +914,7 @@ def dora_check(tehai,dora,reach):
 
 
 def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
-    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=[],
+    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=[],kan=[],
     double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False):
     """
     得点の計算をする。
@@ -944,7 +944,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
     if syanten.get_syanten(origin_tehai) > -1:
         print (syanten.get_syanten(origin_tehai))
         print ("not houra")
-        return 0
+        return 0,0
 
     #tehaiの形を40にかえる
     tehai = tehai_34to40(origin_tehai)
@@ -1075,12 +1075,15 @@ def tehai_34to40(tehai):
 
 
 def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
-    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=None,kan=[],
+    tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=[],kan=[],
     double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False,oya=False):
+
     tehai_hist = mj_util.get_hist(tehai)
-    fan,fu = get_fan_fu(tehai_hist,reach=reach,kyoku=kyoku,honba=honba,arg_bakaze=arg_bakaze,arg_jikaze=arg_jikaze,
-    tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
-    double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
+    print tehai_hist
+    fan,fu = get_fan_fu(tehai_hist)
+    #fan,fu = get_fan_fu(tehai_hist,reach=reach,kyoku=kyoku,honba=honba,arg_bakaze=arg_bakaze,arg_jikaze=arg_jikaze,
+    #tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
+    #double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
 
     tokuten = get_tokuten(fan,fu,oya=oya)
 

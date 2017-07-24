@@ -7,7 +7,7 @@ import syanten
 import tokuten
 import time
 import random
-
+import player_monte
 
 
 class MjPlayer():
@@ -27,8 +27,6 @@ class MjPlayer():
             print "don't have 14 hai"
         select = random.choice(self.tehai)
         return select
-
-
 
 
 
@@ -143,16 +141,6 @@ class MjHai():
 
 
 
-
-
-
-
-
-
-
-
-
-
 class MjTable():
     """
     麻雀の卓情報を定義するクラス
@@ -214,7 +202,7 @@ class MjTable():
             self.honba = 0
             self.table_reach = 0
             #局を進める
-            new_kyoku()
+            self.new_kyoku()
 
 
 
@@ -294,10 +282,14 @@ def main():
     PLAY_NUM = 1 #ゲーム実行回数
 
     #ゲームプレイヤーをセット
-    player_1 = MjPlayer()
-    player_2 = MjPlayer()
-    player_3 = MjPlayer()
-    player_4 = MjPlayer()
+    #player_1 = MjPlayer()
+    #player_2 = MjPlayer()
+    #player_3 = MjPlayer()
+    #player_4 = MjPlayer()
+    player_1 = player_monte.Player_Monte()
+    player_2 = player_monte.Player_Monte()
+    player_3 = player_monte.Player_Monte()
+    player_4 = player_monte.Player_Monte()
     players = [player_1,player_2,player_3,player_4]
 
 
@@ -325,11 +317,12 @@ def main():
                 players[turn].set_tehai(mj_hai.tehai[turn])
                 #あがっているかチェック
                 if syanten.get_syanten(mj_hai.tehai[turn]) == -1:
-                    print "ツモ" 
-                    tokuten = tokuten.get(mj_hai.tehai[turn])
-                    mj_table.agari_update(tokuten)
-                    mj_table.next_kyoku(agari_player=turn)
+                    print "ツモあがりしました"
+                    point = tokuten.get(mj_hai.tehai[turn])
+                    mj_table.agari_update(point)
+                    #mj_table.next_kyoku(agari_player=turn)
                 #何切る
+                players[turn].set_yama(mj_hai.yama,mj_hai.cursor)
                 select_hai = players[turn].nanikiru()
                 print("{0}を切ります".format(mj_util.hai_str(select_hai)))
                 mj_hai.dahai(turn,select_hai)
