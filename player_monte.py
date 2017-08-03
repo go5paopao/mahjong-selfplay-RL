@@ -337,18 +337,28 @@ def check_penchan(counter,i):
         return False
 
 
+def make_black_yama(blackhai):
+    black_yama = []
+    for i in range(len(blackhai)):
+        for j in range(blackhai[i]):
+            black_yama.append(i)
+    return black_yama
+
+
 
 #モンテカルロ法を実施
-def monte_execute(tehai,yama,cursor):
+def monte_execute(tehai,blackhai):
     origin_tehai = get_hist40(tehai)
     hai_score = [0] * 40
-    loop_num = 50
+    loop_num = 500
     for play_num in range(loop_num):
-        if len(yama[cursor:]) == 0:
+        if len(blackhai) == 0:
             dahai = np.random.choice([x for x in range(len(origin_tehai)) if origin_tehai[x] > 0])
             return dahai
+        black_yama = make_black_yama(blackhai)
+
         #山をランダムに生成
-        monte_yama = np.random.choice(yama[cursor:],min(10,len(yama[cursor:])),replace=False)
+        monte_yama = np.random.choice(black_yama,min(10,len(black_yama)),replace=False)
         #print monte_yama
         monte_tehai = origin_tehai[:]
         for i in range(len(monte_yama)):
@@ -391,16 +401,10 @@ def get_hist40(tehai):
 
 class Player_Monte(mj_game.MjPlayer):
 
-    def set_yama(self,yama,cursor):
-        self.yama = yama
-        self.cursor = cursor
-
-
-    def nanikiru(self
-        ):
+    def nanikiru(self):
         if len(self.tehai) != 14:
             print "don't have 14 hai"
-        select = monte_execute(self.tehai,self.yama,self.cursor)
+        select = monte_execute(self.tehai,self.blackhai)
         return select
 
 

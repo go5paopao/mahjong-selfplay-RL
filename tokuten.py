@@ -1076,14 +1076,19 @@ def tehai_34to40(tehai):
 
 def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
     tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=[],kan=[],
-    double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False,oya=False):
+    double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False):
 
     tehai_hist = mj_util.get_hist(tehai)
     print tehai_hist
-    fan,fu = get_fan_fu(tehai_hist)
-    #fan,fu = get_fan_fu(tehai_hist,reach=reach,kyoku=kyoku,honba=honba,arg_bakaze=arg_bakaze,arg_jikaze=arg_jikaze,
-    #tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
-    #double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
+    #自風から親を判定
+    if jikaze == 31:
+        oya = True
+    else:
+        oya = False
+    #fan,fu = get_fan_fu(tehai_hist)
+    fan,fu = get_fan_fu(tehai_hist,reach=reach,kyoku=kyoku,honba=honba,arg_bakaze=arg_bakaze,arg_jikaze=arg_jikaze,
+    tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
+    double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
 
     tokuten = get_tokuten(fan,fu,oya=oya)
 
