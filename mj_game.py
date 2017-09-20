@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 import sys
+import time
+import random
 import numpy as np
 sys.path.append('/usr/local/lib/python2.7/site-packages')
+#original module
 import mj_util
 import syanten
 import tokuten
-import time
-import random
 import player_monte
 
 
@@ -14,14 +15,13 @@ class MjPlayer():
     """
     プレイヤー情報を定義するクラス
     各プレイヤーはこのクラスを継承する
-    """    
+    """
     def set_tehai(self,tehai,furo):
         self.tehai = tehai
         self.furo = furo
 
     def set_blackhai(self,blackhai):
         self.blackhai = blackhai
-
 
     def set_point(self,point):
         self.point = point
@@ -36,8 +36,6 @@ class MjPlayer():
     #立直するかどうか。デフォルトは全て立直
     def reach_decision(self):
         return True
-
-
 
 
 
@@ -168,10 +166,15 @@ class MjHai():
     #場況を表示する（具体的には各プレイヤーの手牌
     def show_bakyo(self):
         for i in range(4):
-            tehai_str = ""
-            for hai in sorted(self.tehai[i]):
-                tehai_str += "[" + mj_util.hai_str(hai) + "]"
-            print ("player[{0}]: {1}".format(i,tehai_str))
+            self.show_tehai(i)
+
+    #手牌を表示する
+    def show_tehai(self,i):
+        tehai_str = ""
+        for hai in sorted(self.tehai[i]):
+            tehai_str += "[" + mj_util.hai_str(hai) + "]"
+        print ("player[{0}]: {1}".format(i,tehai_str))
+
 
     #ドラを表示
     def show_dora(self):
@@ -179,12 +182,6 @@ class MjHai():
         for i in range(len(self.dora)):
             show_str += "[" + mj_util.hai_str(self.dora[i]) + "]"
         print show_str
-
-
-
-
-
-
 
 class MjTable():
     """
@@ -297,7 +294,7 @@ class MjTable():
         elif tenpai_num == 3:
             self.point = [self.point[i]+1000 if tenpai_list[i] == True else self.point[i]-3000 for i in range(4)]
 
-    #局情報をリセット 
+    #局情報をリセット
     def reset(self):
         self.bakaze = 0
         self.kyoku = 0
@@ -336,16 +333,10 @@ class MjTable():
 
 
 
-
-
 def main():
     PLAY_NUM = 10 #ゲーム実行回数
 
     #ゲームプレイヤーをセット
-    #player_1 = MjPlayer()
-    #player_2 = MjPlayer()
-    #player_3 = MjPlayer()
-    #player_4 = MjPlayer()
     player_1 = player_monte.Player_Monte()
     player_2 = player_monte.Player_Monte()
     player_3 = player_monte.Player_Monte()
@@ -381,10 +372,8 @@ def main():
                 players[turn].set_tehai(mj_hai.tehai[turn],mj_hai.furo[turn])
                 #見えてない牌の情報もセット
                 players[turn].set_blackhai(mj_hai.get_blackhai(turn))
-
                 #シャンテン数を求める
                 player_syanten = syanten.get_syanten(mj_hai.tehai[turn])
-
                 #あがっているかチェック
                 if player_syanten == -1:
                     print ("ツモあがりしました")
@@ -401,9 +390,11 @@ def main():
                     if reach_exe_flg:
                         mj_table
 
+                mj_hai.show_tehai(turn)
+
                 #何切る
                 select_hai = players[turn].nanikiru()
-                print("Player[{0}]: {1}を切ります".format(turn+1, mj_util.hai_str(select_hai)))
+                print("Player[{0}]: {1}を切ります".format(turn, mj_util.hai_str(select_hai)))
                 mj_hai.dahai(turn,select_hai)
 
                 #場況を表示（デバッグ用）
@@ -434,4 +425,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -16,7 +16,7 @@ mentsu:[始まりの牌,メンツの種類]
 """
 
 
-debug_flg = True
+debug_flg = False
 
 def make_tehai():
 #mentsu,headからtehaiを生成
@@ -119,7 +119,7 @@ def is_mentsu_sukantsu():
     global kan_list
     if len(kan_list) == 4:
         if debug_flg:
-            print "四槓子" 
+            print "四槓子"
         return True
 
 def is_mentsu_sankantsu():
@@ -127,7 +127,7 @@ def is_mentsu_sankantsu():
     global kan_list
     if len(kan_list) == 3:
         if debug_flg:
-            print "三槓子" 
+            print "三槓子"
         return True
 
 def is_mentsu_daisushi():
@@ -213,7 +213,7 @@ def is_mentsu_sananko():
     #あがり牌が暗刻のものでなければ
     if anko_num == 3:
         if debug_flg:
-            print "三暗刻" 
+            print "三暗刻"
         return True
     else:
         return False
@@ -624,7 +624,7 @@ def calcu_fu(furo_flg):
         fu += 10 - fu%10
 
     return fu
-                
+
 
 
 
@@ -648,8 +648,8 @@ def check_yaku_mentsu():
     global mentsu
     global head
 
-    if debug_flg:
-        print("-------------------------------------")
+    #if debug_flg:
+    #    print("-------------------------------------")
 
     #フーロしているかどうか確認
     furo_flg = False
@@ -767,7 +767,7 @@ def check_yaku_mentsu():
             fan += 1
         #一気通貫
         if is_mentsu_ikkitsuukan():
-            fan += 1   
+            fan += 1
         #チャンタ系
         if is_mentsu_junchan():
             fan += 2
@@ -996,7 +996,7 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
             if debug_flg:
                 print("ダブル立直")
             fan += 1
-        else:
+        elif debug_flg:
             print("立直")
     #一発であれば+1翻（リーチしていることも念のため条件に入れる）
     if ippatsu and reach:
@@ -1024,8 +1024,8 @@ def get_fan_fu(origin_tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze
             print ("門前清模和")
         fan += 1
 
-    print (str(fan) + "翻")
-    print (str(fu) + "符")
+    #print (str(fan) + "翻")
+    #print (str(fu) + "符")
 
     #上記の役がつかず翻が0であれば役なし。0点として返す
     if fan == 0:
@@ -1078,8 +1078,11 @@ def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
     tsumo=False,arg_agari_hai=0,dora=[0]*8,ippatsu=False,arg_furo=[],kan=[],
     double_reach=False,chankan=False,haitei=False,houtei=False,tenho=False,chiho=False):
 
-    tehai_hist = mj_util.get_hist(tehai)
-    print tehai_hist
+    if len(tehai) <= 14:
+        tehai_hist = mj_util.get_hist(tehai)
+    else:
+        tehai_hist = tehai[:]
+    #print tehai_hist
     #自風から親を判定
     if jikaze == 31:
         oya = True
@@ -1090,6 +1093,10 @@ def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
     tsumo=tsumo,arg_agari_hai=arg_agari_hai,dora=dora,ippatsu=ippatsu,arg_furo=arg_furo,kan=kan,
     double_reach=double_reach,chankan=chankan,haitei=haitei,houtei=houtei,tenho=tenho,chiho=chiho)
 
+    #️if fan > 0:
+    #    print str(fan) + "翻"
+    #    print tehai_hist
+
     tokuten = get_tokuten(fan,fu,oya=oya)
 
     return tokuten
@@ -1099,14 +1106,14 @@ def get(tehai,reach=False,kyoku=1,honba=0,arg_bakaze=31,arg_jikaze=31,
 
 if __name__ == "__main__":
 
-    tehai = [1,2,3,4,5,6,7,8,9,22,23,24,31,31]    
+    tehai = [1,2,3,4,5,6,7,8,9,22,23,24,31,31]
     #tehai = [1,2,3,4,5,6,11,12,13,22,23,24,33,33]
     #tehai = [3,4,5,11,12,12,13,13,14,19,19,35,35,35]
     #tehai = [3,3,4,4,5,5,13,14,15,23,24,25,29,29]
     #furo = [[3,1],[35,0]]
     #furo = [[16,1]]
     agari = 31
-    
+
     #furo = [[1,0],[9,0]]
     furo = []
     kan = [1,9,11]
