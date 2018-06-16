@@ -10,6 +10,7 @@ import mj_util
 
 
 
+
 def get_syanten(origin_tehai):
 
     #tehaiの形を40にかえる
