@@ -19,15 +19,16 @@ import numpy as np
 #独自モジュール
 import mj_util
 import mj_tehai
-
+import reward_change
 #流局までの打牌数を決める
-RYUKYOKU_NUM = 20
+RYUKYOKU_NUM = 18
 
 def phi(obs):
     return obs.astype(np.float32)
 
 class Reward():
-    """報酬を状態に応じて決めるためのクラス
+    """
+    報酬を状態に応じて決めるためのクラス
     段階的な報酬を定義し、条件を満たしたら次の状態に進む
     """
     def __init__(self):
@@ -150,7 +151,7 @@ class MJ():
     """麻雀のゲーム状態を管理するためのクラス"""
     #指定されたシャンテンになる山を生成する
     def make_yama(self):
-        init_yama = [x for x in xrange(34) for _ in xrange(4)]
+        init_yama = [x for x in range(34) for _ in range(4)]
         yama = np.random.permutation(init_yama)
         tehai = [0] * 34
         return yama
@@ -294,7 +295,7 @@ class CommonFunction(chainer.Chain):
         #字牌と数牌を分ける
         x_number = chainer.Variable(x[:,0:3,:,:].astype(np.float32))
         #x_jihai = chainer.Variable(x[:,3,:,:].flatten().astype(np.float32).reshape(x[:,3,:,:].size/45,45))
-        x_allhai = chainer.Variable(x.flatten().astype(np.float32).reshape(x.size/180,180))
+        x_allhai = chainer.Variable(x.flatten().astype(np.float32).reshape((int)(x.size/180),180))
         #print (x_jihai)
         #print (x_allhai)
         h = F.max_pooling_2d(F.relu(self.conv1(x_number)), 2, stride=2)
@@ -312,10 +313,11 @@ class A3CFFSoftmax(a3c.A3CSharedModel):
         self.q_func = policies.SoftmaxPolicy(model=QFunction())
         self.v_func = VFunction()
         self.common = CommonFunction(ndim_obs)
-        super(A3CFFSoftmax,self).__init__(self.common,self.q_func, self.v_func)
+        #super(A3CFFSoftmax,self).__init__(self.common,self.q_func, self.v_func)
+        super().__init__(self.common,self.q_func, self.v_func)
 
 def get_state(tehai):
-#tehaiから状態を作り返す
+    #tehaiからinputを作り返す
     state = np.zeros((4,9,5),dtype=np.float32)
     for hai,hai_num in enumerate(tehai):
         channel = int(hai/9)
@@ -327,7 +329,7 @@ def get_state(tehai):
 def main():
     global RYUKYOKU_NUM
     mj = MJ()
-    rwd = Reward()
+    rwd = reward_change.Reward()
     # 環境と行動の次元数
     n_actions = 34
     model = A3CFFSoftmax(34*6, 34)
@@ -379,7 +381,7 @@ def main():
             else:
                 last_state = get_state(mj.tehai.copy())
         #一定エピソードごとに出力
-        if i % 10000 == 0:
+        if i % 100 == 0:
             result = ("episode:", i, "/ miss:", miss, " / win:", win, " / draw:", draw, " / statistics:", agent.get_statistics())
             print(result)
             #学習結果ログの書き込み
