@@ -19,132 +19,12 @@ import numpy as np
 #独自モジュール
 import mj_util
 import mj_tehai
-import reward_change
+import reward
 #流局までの打牌数を決める
 RYUKYOKU_NUM = 18
 
 def phi(obs):
     return obs.astype(np.float32)
-
-class Reward():
-    """
-    報酬を状態に応じて決めるためのクラス
-    段階的な報酬を定義し、条件を満たしたら次の状態に進む
-    """
-    def __init__(self):
-        self.stage = 0
-        self.max_stage = 6
-        self.stage_clear_rate = {
-            0:0.9,
-            1:0.9,
-            2:0.9,
-            3:0.9,
-            4:0.7,
-            5:0.6,
-            6:0.3
-        }
-    def get_result_and_reward(self,mj):
-        """現在の報酬ステージと結果から報酬を決める"""
-        result = None
-        reward = 0
-        stop_flg = False
-        if self.stage == 0:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.turn_num > 3:
-                reward = 1
-                result = 1
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 1:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.turn_num > 7:
-                reward = 1
-                result = 1
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 2:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.turn_num > 15:
-                reward = 1
-                result = 1
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 3:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
-                reward = 1
-                result = 1
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 4:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.syanten <= 1:
-                reward = 1
-                result = 1
-                stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
-                reward = 0
-                result = 0
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 5:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.syanten <= 0:
-                reward = 1
-                result = 1
-                stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
-                reward = 0
-                result = 0
-                stop_flg = True
-            else:
-                reward = 0
-        elif self.stage == 6:
-            if mj.missed:
-                reward = -1
-                result = -1
-                stop_flg = True
-            elif mj.syanten < 0:
-                reward = 1
-                result = 1
-                stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
-                reward = 0
-                result = 0
-                stop_flg = True
-            else:
-                reward = 0
-        return reward,result,stop_flg
-
-    def stage_check(self,win,miss,draw):
-        """報酬ステージをクリアしたかをチェック"""
-        win_rate = float(win) / (win+miss+draw)
-        if win_rate > self.stage_clear_rate[self.stage] and self.stage < self.max_stage:
-            print ("StageUp:{0}to{1}".format(self.stage,self.stage+1))
-            self.stage += 1
 
 
 class MJ():
@@ -327,9 +207,8 @@ def get_state(tehai):
 
 #main関数
 def main():
-    global RYUKYOKU_NUM
     mj = MJ()
-    rwd = reward_change.Reward()
+    rwd = reward.ChangeReward(RYUKYOKU_NUM)
     # 環境と行動の次元数
     n_actions = 34
     model = A3CFFSoftmax(34*6, 34)
@@ -354,19 +233,19 @@ def main():
     #エピソードの繰り返し実行
     for i in range(1, n_episodes + 1):
         mj.reset(i)
-        reward = 0
+        reward_value = 0
         last_state = None
         while True:
             #mj.show()
             #配置マス取得
             state = get_state(mj.tehai.copy())
             #print state
-            action = agent.act_and_train(state, reward)
+            action = agent.act_and_train(state, reward_value)
             #print action
             #配置を実行
             mj.dahai(action)
             #配置の結果、終了時には報酬とカウンタに値をセットして学習
-            reward,result,stop_flg = rwd.get_result_and_reward(mj)
+            reward_value,result,stop_flg = rwd.get_result_and_reward(mj)
             #終了していたら 結果カウンタをインクリメントし、stop_episode_and_train
             if stop_flg:
                 if result == 1:
@@ -376,19 +255,25 @@ def main():
                 elif result == -1:
                     miss += 1
                 state = get_state(mj.tehai.copy())
-                agent.stop_episode_and_train(state, reward, True)
+                agent.stop_episode_and_train(state, reward_value, True)
                 break
             else:
                 last_state = get_state(mj.tehai.copy())
         #一定エピソードごとに出力
         if i % 100 == 0:
-            result = ("episode:", i, "/ miss:", miss, " / win:", win, " / draw:", draw, " / statistics:", agent.get_statistics())
+            result = (
+                "episode:", i, 
+                "/ miss:", miss, 
+                "/ win:", win, 
+                "/ draw:", draw, 
+                "/ statistics:", agent.get_statistics()
+            )
             print(result)
             #学習結果ログの書き込み
             with open('learn_log.txt','a') as f:
                 f.write(str(result) + "\n")
-            #結果から報酬の段階が変わったかチェック
-            rwd.stage_check(win,miss,draw)
+            #結果から報酬が変わったかチェック
+            rwd.status_check(win,miss,draw)
             #カウンタの初期化
             miss = 0
             win = 0

@@ -1,11 +1,38 @@
 import os
 
-class Reward():
+class Reward(object):
+    """mjの結果から報酬を返すクラス"""
+    def __init__(self,ryukyoku_turn_num):
+        self.n_ryukyoku_turn = ryukyoku_turn_num
+
+    def get_result_and_reward(self,mj):
+        if mj.missed:
+            reward = -1
+            result = -1
+            stop_flg = True
+        elif mj.syanten < 0:
+            reward = 1
+            result = 1
+            stop_flg = True
+        elif mj.turn_num > self.ryukyoku_turn_num:
+            reward = 0
+            result = 0
+            stop_flg = True
+        else:
+            reward = 0
+
+    def status_check(self,win,miss,draw):
+        """結果によって報酬を変えるかどうか。Rewardではしない"""
+        pass
+
+
+class ChangeReward(Reward):
     """
     報酬を状態に応じて決めるためのクラス
     段階的な報酬を定義し、条件を満たしたら次の状態に進む
     """
-    def __init__(self):
+    def __init__(self,ryukyoku_turn_num):
+        super().__init__(ryukyoku_turn_num)
         self.stage = 0
         self.max_stage = 6
         self.stage_clear_rate = {
@@ -60,7 +87,7 @@ class Reward():
                 reward = -1
                 result = -1
                 stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
+            elif mj.turn_num > self.ryukyoku_turn_num:
                 reward = 1
                 result = 1
                 stop_flg = True
@@ -75,7 +102,7 @@ class Reward():
                 reward = 1
                 result = 1
                 stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
+            elif mj.turn_num > self.ryukyoku_turn_num:
                 reward = 0
                 result = 0
                 stop_flg = True
@@ -90,7 +117,7 @@ class Reward():
                 reward = 1
                 result = 1
                 stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
+            elif mj.turn_num > self.ryukyoku_turn_num:
                 reward = 0
                 result = 0
                 stop_flg = True
@@ -105,7 +132,7 @@ class Reward():
                 reward = 1
                 result = 1
                 stop_flg = True
-            elif mj.turn_num > RYUKYOKU_NUM:
+            elif mj.turn_num > self.ryukyoku_turn_num:
                 reward = 0
                 result = 0
                 stop_flg = True
@@ -113,7 +140,7 @@ class Reward():
                 reward = 0
         return reward,result,stop_flg
 
-    def stage_check(self,win,miss,draw):
+    def status_check(self,win,miss,draw):
         """報酬ステージをクリアしたかをチェック"""
         win_rate = float(win) / (win+miss+draw)
         if win_rate > self.stage_clear_rate[self.stage] and self.stage < self.max_stage:
