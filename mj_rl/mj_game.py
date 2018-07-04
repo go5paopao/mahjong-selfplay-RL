@@ -1,3 +1,4 @@
+# coding: utf-8
 import configparser
 import numpy as np
 import mj_tehai
@@ -39,9 +40,9 @@ class MJ():
     def dahai(self, act):
         #手配として存在していれば打牌できる
         if self.tehai[act] > 0:
-            #print "******************"
-            #self.show()
-            #print "dahai:" + self.show_hai(act)
+            print ("******************")
+            self.show()
+            print ("dahai:" + self.show_hai(act))
             #切り前のシャンテン数を計算
             #self.check_before_syanten()
             #actの牌を手配からデクリメント
@@ -59,6 +60,7 @@ class MJ():
             self.turn_num += 1
             #self.show()
         else:
+            print("dahai miss")
             self.missed = True
             self.done = True
             act = self.get_empty_dahai()

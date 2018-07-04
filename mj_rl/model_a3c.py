@@ -96,7 +96,7 @@ class Model():
     def __init__(self):
         self.model = A3CFFSoftmax()
         self.optimizer = rmsprop_async.RMSpropAsync(lr=7e-4, eps=1e-1, alpha=0.99)
-        self.agent = a3c.A3C(self.model, self.optimizer, t_max=5, gamma=0.99, beta=1e-2, phi=phi)
+        self.agent = a3c.A3C(self.model, self.optimizer, t_max=5, gamma=0.99, beta=1e-2, phi=phi, act_deterministically=True)
         self.add_hooks = [
             chainer.optimizer.GradientClipping(40)  
         ]

@@ -42,54 +42,49 @@ def main():
     #モデル用モジュールからモデル用クラスオブジェクト生成
     learn = model_a3c.Model()
     model = learn.model 
+    ##finetuningする場合利用
+    serializers.load_npz("model_file/a3c/model.npz", learn.model)
     #model.to_gpu(0)
     opt = learn.optimizer 
     opt.setup(model)
-    for add_setting in learn.add_hooks:
-        opt.add_hook(add_setting)
-    ##finetuningする場合利用
-    #serializers.load_npz("pretrained_model/mymodel.npz", policy_func)
-    #serializers.load_npz("pretrained_model/optimizer.npz", optimizer_p)
+    #for add_setting in learn.add_hooks:
+    #    opt.add_hook(add_setting)
     agent = learn.agent 
     #結果カウンタ
     miss = 0
     agari = 0
     tenpai = 0
     draw = 0
-    #学習結果ログの書き込み
-    with open(learn_log_path,'a') as f:
-        f.write("learning start at {0}\n".format(time.ctime()))
     #エピソードの繰り返し実行
     for i in range(1, episodes_num + 1):
         mj.reset(i)
-        reward_value = 0
         last_state = None
+        print("---------------------")
         while True:
             #mj.show()
             #配置マス取得
             state = get_state(mj.tehai.copy())
-            #print state
-            action = agent.act_and_train(state, reward_value)
-            #print action
+            #print (state)
+            #mj.show()
+            #action = agent.act(state)
+            pout,_ = learn.model.pi_and_v(state)
+            action = pout.most_probable.data[0]
             #配置を実行
             mj.dahai(action)
-            #配置の結果、終了時には報酬とカウンタに値をセットして学習
-            reward_value,result,stop_flg = rwd.get_result_and_reward(mj)
-            #終了していたら 結果カウンタをインクリメントし、stop_episode_and_train
-            if stop_flg:
-                if result == 1:
-                    agari += 1
-                elif result == 0:
-                    draw += 1
-                    if mj.syanten == 0:
-                        tenpai += 1
-                elif result == -1:
-                    miss += 1
-                state = get_state(mj.tehai.copy())
-                agent.stop_episode_and_train(state, reward_value, True)
+            if mj.missed:
+                print("miss")
+                miss += 1
                 break
-            else:
-                last_state = get_state(mj.tehai.copy())
+            elif mj.done:
+                print("done")
+                draw += 1
+                break
+            elif mj.agari:
+                print("agari")
+                for _ in range(100):
+                    print("yyyyyyyyyyy")
+                agari += 1
+                break
         #一定エピソードごとに出力
         if i % 10000 == 0:
             result = (
@@ -100,22 +95,12 @@ def main():
                 "/ tenpai:", tenpai,
                 "/ statistics:", agent.get_statistics()
             )
-            print(result)
-            #学習結果ログの書き込み
-            with open(learn_log_path,'a') as f:
-                f.write(str(result) + "\n")
-            #結果から報酬が変わったかチェック
-            rwd.status_check(i,agari,miss,draw)
+            #print(result)
             #カウンタの初期化
             miss = 0
             agari = 0
             draw = 0
             tenpai = 0
-        # 一定エピソードごとにモデルを保存
-        if i % model_save_interval == 0:
-            save_path = os.path.join(model_save_path,'{0:08d}'.format(i))
-            agent.save(save_path)
-    print("Training finished.")
 
 
 if __name__ == "__main__":
