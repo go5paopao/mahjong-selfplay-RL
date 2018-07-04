@@ -3,9 +3,12 @@ import os
 class Reward(object):
     """mjの結果から報酬を返すクラス"""
     def __init__(self,ryukyoku_turn_num):
-        self.n_ryukyoku_turn = ryukyoku_turn_num
+        self.ryukyoku_turn_num = ryukyoku_turn_num
 
     def get_result_and_reward(self,mj):
+        result = None
+        reward = 0
+        stop_flg = False
         if mj.missed:
             reward = -1
             result = -1
@@ -15,11 +18,17 @@ class Reward(object):
             result = 1
             stop_flg = True
         elif mj.turn_num > self.ryukyoku_turn_num:
-            reward = 0
             result = 0
+            if mj.syanten == 0:
+                reward = 0.5
+            elif mj.syanten == 1:
+                reward = 0.1
+            else:    
+                reward = 0
             stop_flg = True
         else:
             reward = 0
+        return reward,result,stop_flg
 
     def status_check(self,win,miss,draw):
         """結果によって報酬を変えるかどうか。Rewardではしない"""
@@ -49,6 +58,7 @@ class ChangeReward(Reward):
         result = None
         reward = 0
         stop_flg = False
+        # stage0
         if self.stage == 0:
             if mj.missed:
                 reward = -1
@@ -60,6 +70,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage1
         elif self.stage == 1:
             if mj.missed:
                 reward = -1
@@ -71,6 +82,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage2
         elif self.stage == 2:
             if mj.missed:
                 reward = -1
@@ -82,6 +94,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage3
         elif self.stage == 3:
             if mj.missed:
                 reward = -1
@@ -93,6 +106,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage4
         elif self.stage == 4:
             if mj.missed:
                 reward = -1
@@ -108,6 +122,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage5
         elif self.stage == 5:
             if mj.missed:
                 reward = -1
@@ -123,6 +138,7 @@ class ChangeReward(Reward):
                 stop_flg = True
             else:
                 reward = 0
+        # stage6
         elif self.stage == 6:
             if mj.missed:
                 reward = -1
@@ -140,10 +156,11 @@ class ChangeReward(Reward):
                 reward = 0
         return reward,result,stop_flg
 
-    def status_check(self,win,miss,draw):
+    def status_check(self,iter_num,win,miss,draw):
         """報酬ステージをクリアしたかをチェック"""
         win_rate = float(win) / (win+miss+draw)
         if win_rate > self.stage_clear_rate[self.stage] and self.stage < self.max_stage:
             print ("StageUp:{0}to{1}".format(self.stage,self.stage+1))
+            with open('stage_up.log','a') as f:
+                f.write('iteration:{0},before:{1},after:{2}'.format(iter_num,self.stage,self.stage+1))
             self.stage += 1
-
