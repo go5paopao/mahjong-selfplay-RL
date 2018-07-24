@@ -7,7 +7,7 @@ sys.path.append('/usr/local/lib/python2.7/site-packages')
 #手牌をヒストグラム型にかえる
 def get_hist(tehai):
     tehai_hist = [0]*40
-    for i in range(len(tehai)):
+    for i in xrange(len(tehai)):
         tehai_hist[tehai[i]] += 1
     return tehai_hist
 
@@ -44,6 +44,3 @@ if __name__ == "__main__":
     tehai_hist = get_hist(tehai)
     syanten = get_syanten(tehai_hist)
     print ("syanten = " + str(syanten))
-
-
-
