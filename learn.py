@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import csv
 import time
 import configparser
 import chainer
@@ -57,8 +58,12 @@ def main():
     tenpai = 0
     draw = 0
     #学習結果ログの書き込み
-    with open(learn_log_path,'a') as f:
+    with open(learn_log_path,'a',newline='',encoding='utf-8') as f:
         f.write("learning start at {0}\n".format(time.ctime()))
+        header_row = ["episode","stage","miss","agari","draw","tenpai",
+                "average_value","average_entropy"]
+        writer = csv.writer(f,lineterminator='\n')
+        writer.writerow(header_row)
     #エピソードの繰り返し実行
     for i in range(1, episodes_num + 1):
         mj.reset(i)
@@ -91,19 +96,24 @@ def main():
             else:
                 last_state = get_state(mj.tehai.copy())
         #一定エピソードごとに出力
-        if i % 10000 == 0:
-            result = (
-                "episode:", i, 
-                "/ miss:", miss, 
-                "/ agari:", agari, 
-                "/ draw:", draw,
-                "/ tenpai:", tenpai,
-                "/ statistics:", agent.get_statistics()
-            )
+        if i % 10 == 0:
+            average_value = agent.get_statistics()[0][1]
+            average_entropy = agent.get_statistics()[1][1]
+            result = {
+                "episode": i, 
+                "miss": miss, 
+                "agari": agari, 
+                "draw:": draw,
+                "tenpai:": tenpai,
+                "avarage_value": average_value,
+                "average_entropy": average_entropy
+            }
             print(result)
             #学習結果ログの書き込み
-            with open(learn_log_path,'a') as f:
-                f.write(str(result) + "\n")
+            with open(learn_log_path,'a',newline='',encoding='utf-8') as f:
+                out_row = list(result.values())
+                writer = csv.writer(f,lineterminator='\n')
+                writer.writerow(out_row)
             #結果から報酬が変わったかチェック
             rwd.status_check(i,agari,miss,draw)
             #カウンタの初期化
