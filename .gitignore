@@ -1,1 +1,3 @@
 /mj_rl/learn_result/
+*.pyc
+*.swp
