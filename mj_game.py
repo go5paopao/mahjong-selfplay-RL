@@ -6,11 +6,12 @@ import mj_util
 
 class MJ():
     """麻雀のゲーム状態を管理するためのクラス"""
-    def __init__(self):
+    def __init__(self,print_flg=False):
         #設定ファイルの読み込み
         inifile = configparser.ConfigParser()
         inifile.read('./config.ini','UTF-8')
         self.ryukyoku_num = inifile.getint('settings', 'ryukyoku_num') #流局までの順目
+        self.print_flg = print_flg
      
     #指定されたシャンテンになる山を生成する
     def make_yama(self):
@@ -40,14 +41,14 @@ class MJ():
     def dahai(self, act):
         #手配として存在していれば打牌できる
         if self.tehai[act] > 0:
-            print ("******************")
-            self.show()
-            print ("dahai:" + self.show_hai(act))
+            if self.print_flg:
+                print ("******************")
+                self.show()
+                print ("dahai:" + self.show_hai(act))
             #切り前のシャンテン数を計算
             #self.check_before_syanten()
             #actの牌を手配からデクリメント
             self.tehai[act] -= 1.0
-            #self.show()
             #打牌した段階でシャンテンのチェック
             #self.check_after_syanten()
             #self.check_syanten()
@@ -60,7 +61,8 @@ class MJ():
             self.turn_num += 1
             #self.show()
         else:
-            print("dahai miss")
+            if self.print_flg:
+                print("dahai miss")
             self.missed = True
             self.done = True
             act = self.get_empty_dahai()
@@ -81,7 +83,8 @@ class MJ():
             #打牌できる牌番号を取得
             return np.random.choice(empties)
         else:
-            print ("No Tehai")
+            if self.print_flg:
+                print ("No Tehai")
             return 0
 
     def show(self):

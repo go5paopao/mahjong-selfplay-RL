@@ -36,7 +36,7 @@ def main():
     model_save_path = inifile.get('settings', 'model_save_path') #モデルを保存するパス
     learn_log_path = inifile.get('settings', 'learn_log_path') #ログの保存先
    #各種クラスオブジェクトの生成
-    mj = mj_game.MJ()
+    mj = mj_game.MJ(print_flg=True)
     rwd = reward.ChangeReward(episodes_num)
     #rwd = reward.Reward(episodes_num)
     #モデル用モジュールからモデル用クラスオブジェクト生成

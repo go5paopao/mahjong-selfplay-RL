@@ -96,7 +96,7 @@ def main():
             else:
                 last_state = get_state(mj.tehai.copy())
         #一定エピソードごとに出力
-        if i % 10 == 0:
+        if i % 200000 == 0:
             average_value = agent.get_statistics()[0][1]
             average_entropy = agent.get_statistics()[1][1]
             result = {
