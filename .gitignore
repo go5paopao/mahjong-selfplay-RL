@@ -1,3 +1,5 @@
-/mj_rl/learn_result/
+/learn_history/
+/old_src/
 *.pyc
 *.swp
+.DS_Store
