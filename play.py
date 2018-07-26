@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import configparser
+import random
 import chainer
 import chainer.functions as F
 import chainer.links as L
@@ -23,6 +24,29 @@ def get_state(tehai):
         num = hai%9
         state[channel,num,int(hai_num)] = 1
     return state
+
+def check_value(model,mj):
+    iter_num = 100
+    tehai = mj.tehai.copy()
+    for i in range(len(tehai)):
+        if tehai[i] == 0:
+            continue
+        #この時点の手牌は13枚なのでツモをしたあとの手牌での評価を行う
+        print(mj.show_hai(i))
+        tehai[i] -= 1
+        value = 0
+        for _ in range(iter_num):
+            tsumo_hai = random.choice(mj.yama[mj.cursor:])
+            tehai[tsumo_hai] += 1
+            state = get_state(tehai)
+            _,_value = model.pi_and_v(state)
+            value += _value.data[0][0]
+            tehai[tsumo_hai] -= 1
+        tehai[i] += 1
+        print (value/iter_num)
+        print ("-------")
+       
+        
 
 #学習用main関数
 def main():
@@ -65,10 +89,14 @@ def main():
             #配置マス取得
             state = get_state(mj.tehai.copy())
             #print (state)
-            #mj.show()
-            #action = agent.act(state)
+            mj.show()
+            #action2 = agent.act_and_train(state, 0)
             pout,_ = learn.model.pi_and_v(state)
             action = pout.most_probable.data[0]
+            #print (action,action2)
+            print(pout.logits)
+            #価値関数がどう評価しているかをチェック
+            check_value(learn.model,mj)
             #配置を実行
             mj.dahai(action)
             if mj.missed:
