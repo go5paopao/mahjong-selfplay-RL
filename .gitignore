@@ -2,5 +2,5 @@
 /old_src/
 *.pyc
 *.swp
-.learn_log.csv
+learn_log.csv
 .DS_Store
