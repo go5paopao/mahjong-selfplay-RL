@@ -12,13 +12,13 @@ from chainerrl import v_function
 import numpy as np
 
 def phi(obs):
-    return obs.astype(np.float32)
+    return np.array([obs[0].astype(np.float32),obs[1].astype(np.float32)])
 
 class VFunction(chainer.Chain):
     """V関数部分のネットワーク"""
     def __init__(self):
         super(VFunction, self).__init__(
-            v_fc1=L.Linear(34*5, 100),
+            v_fc1=L.Linear(200, 100),
             v_fc2=L.Linear(100, 100),
             v_fc3=L.Linear(100, 1))
     def __call__(self, x, test=False):
@@ -31,7 +31,7 @@ class QFunction(chainer.Chain):
     """Q関数部分のネットワーク"""
     def __init__(self):
         super(QFunction, self).__init__(
-            q_fc1=L.Linear(34*5, 100),
+            q_fc1=L.Linear(200, 100),
             q_fc2=L.Linear(100,100),
             q_fc3=L.Linear(100, 34))
     def __call__(self, x, test=False):
@@ -42,19 +42,39 @@ class QFunction(chainer.Chain):
 
 class CommonFunctionCNN(chainer.Chain):
     """Q関数とV関数の共通部分のネットワーク（CNNを利用）"""
-    def __init__(self,n_channels=4):
+    def __init__(self,num_ch=120,jihai_ch=32,out_ch=200):
         super(CommonFunctionCNN, self).__init__(
-            conv1=L.Convolution2D(3,16,ksize=(4,1),pad=1,stride=1),
-            conv2=L.Convolution2D(16,32,ksize=4,pad=1,stride=1),
-            conv3=L.Convolution2D(32,64,ksize=4,pad=1,stride=1),
-            c_fc1=L.Linear(256, 200),
-            c_fc2=L.Linear(200+180, 200), #add jihai features
-            c_fc3=L.Linear(200, 34*5))
-
+            num_conv1 = L.Convolution2D(6,num_ch,ksize=4,pad=1),
+            num_conv2 = L.Convolution2D(in_channels=num_ch,out_channels=num_ch,ksize=4,pad=1),
+            num_conv3 = L.Convolution2D(in_channels=num_ch,out_channels=num_ch,ksize=2,pad=1),
+            num_conv4 = L.Convolution2D(in_channels=num_ch,out_channels=num_ch,ksize=2,pad=1),
+            num_conv5 = L.Convolution2D(in_channels=num_ch,out_channels=num_ch,ksize=1,pad=1),
+            jihai_conv1 = L.Convolution2D(in_channels=2,out_channels=jihai_ch,ksize=(1,4)),
+            jihai_conv2 = L.Convolution2D(in_channels=jihai_ch,out_channels=jihai_ch,ksize=1),
+            merge_l1 = L.Linear(8144,out_ch) 
+        )
     def __call__(self, x, test=False):
+        #args: x tuple(number_array,jihai_array)
+        #字牌と数牌を分ける
+        x_number = F.expand_dims(chainer.Variable(x[0][0].astype(np.float32)),axis=0)
+        x_jihai = F.expand_dims(chainer.Variable(x[0][1].astype(np.float32)),axis=0)
+        h_num = F.relu(self.num_conv1(x_number))
+        h_num = F.relu(self.num_conv2(h_num))
+        h_num = F.relu(self.num_conv3(h_num))
+        h_num = F.relu(self.num_conv4(h_num))
+        h_num = F.relu(self.num_conv5(h_num))
+        h_jihai = F.relu(self.jihai_conv1(x_jihai))
+        h_jihai = F.relu(self.jihai_conv2(h_jihai))
+        h_num = F.expand_dims(F.flatten(h_num),axis=0)
+        h_jihai = F.expand_dims(F.flatten(h_jihai),axis=0)
+        h = F.concat((h_num,h_jihai))
+        h = F.relu(self.merge_l1(h))
+        return h
+
+    def old__call(self, x, test=False):
+        #args: x tuple(number_array,jihai_array)
         #字牌と数牌を分ける
         x_number = chainer.Variable(x[:,0:3,:,:].astype(np.float32))
-        #x_jihai = chainer.Variable(x[:,3,:,:].flatten().astype(np.float32).reshape(x[:,3,:,:].size/45,45))
         x_allhai = chainer.Variable(x.flatten().astype(np.float32).reshape((int)(x.size/180),180))
         #print (x_jihai)
         #print (x_allhai)
@@ -66,6 +86,7 @@ class CommonFunctionCNN(chainer.Chain):
         h = F.relu(self.c_fc2(h))
         h = F.relu(self.c_fc3(h))
         return h
+
 
 
 class CommonFunctionFC(chainer.Chain):
@@ -85,10 +106,10 @@ class CommonFunctionFC(chainer.Chain):
 
 class A3CFFSoftmax(a3c.A3CSharedModel):
     """An example of A3C feedforward softmax policy."""
-    def __init__(self, hidden_sizes=(200, 200)):
+    def __init__(self):
         self.q_func = policies.SoftmaxPolicy(model=QFunction())
         self.v_func = VFunction()
-        self.common = CommonFunctionFC()
+        self.common = CommonFunctionCNN()
         #super(A3CFFSoftmax,self).__init__(self.common,self.q_func, self.v_func)
         super().__init__(self.common,self.q_func, self.v_func)
 

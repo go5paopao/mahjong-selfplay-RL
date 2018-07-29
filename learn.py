@@ -16,14 +16,36 @@ import mj_game
 import reward
 import model_a3c
 
-def get_state(tehai):
-    #tehaiからinputを作り返す
-    state = np.zeros((4,9,5),dtype=np.float32)
-    for hai,hai_num in enumerate(tehai):
-        channel = int(hai/9)
-        num = hai%9
-        state[channel,num,int(hai_num)] = 1
-    return state
+def get_state(mj):
+    #inputの元となるArrayを作り返す
+    #Returns: tuple(a,b) 
+    # a => array for number 
+    # b => array for jihai 
+    #array for number
+    # size:6x9x4
+    # channel1:手牌1~9m
+    # channel2,3:chanel1のピンズ、ソウズ
+    # channel4:見えてない牌1~9m
+    # channel5,6:chanel4のピンズ、ソウズ
+    #array for jihai
+    # size:2x7x4
+    # 1:手牌の字牌
+    # 2:見えてない牌の字牌
+    number_array = np.zeros((6,9,4),dtype=np.float32)
+    jihai_array = np.zeros((2,7,4),dtype=np.float32)
+    hai_types = [mj.tehai, mj.invisible_hai]
+    for i,hai_array in enumerate(hai_types):
+        for hai_ix,hai_count in enumerate(hai_array):
+            if hai_count == 0:
+                continue
+            channel = int(hai_ix/9)
+            num = hai_ix%9
+            if channel < 3:
+                number_array[i*3+channel,num,int(hai_count-1)] = 1
+            else:
+                jihai_array[i,num,int(hai_count-1)] = 1
+    return [number_array,jihai_array]
+    #return np.array([number_array,jihai_array])
 
 #学習用main関数
 def main():
@@ -72,7 +94,7 @@ def main():
         while True:
             #mj.show()
             #配置マス取得
-            state = get_state(mj.tehai.copy())
+            state = get_state(mj)
             #print state
             action = agent.act_and_train(state, reward_value)
             #print action
@@ -90,13 +112,13 @@ def main():
                         tenpai += 1
                 elif result == -1:
                     miss += 1
-                state = get_state(mj.tehai.copy())
+                state = get_state(mj)
                 agent.stop_episode_and_train(state, reward_value, True)
                 break
             else:
-                last_state = get_state(mj.tehai.copy())
+                last_state = get_state(mj)
         #一定エピソードごとに出力
-        if i % 200000 == 0:
+        if i % 2000 == 0:
             average_value = agent.get_statistics()[0][1]
             average_entropy = agent.get_statistics()[1][1]
             result = {

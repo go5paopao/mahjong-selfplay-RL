@@ -24,6 +24,7 @@ class MJ():
         """局毎に状態をリセットする"""
         self.cursor = 0
         self.tehai = np.array([0] * 34, dtype=np.float32)
+        self.invisible_hai = np.array([4] * 34, dtype=np.float32)
         self.yama = self.make_yama()
         self.missed = False
         self.done = False
@@ -31,9 +32,10 @@ class MJ():
         self.turn_num = 0
         #山からランダムに手配をセットする
         for i in range(14):
-            self.hai = self.yama[self.cursor]
-            self.tehai[self.hai] += 1
+            tsumo_hai = self.yama[self.cursor]
+            self.tehai[tsumo_hai] += 1
             self.cursor += 1
+            self.invisible_hai[tsumo_hai] -= 1
         self.syanten = mj_tehai.get_syanten(self.tehai)
         self.pre_syanten = self.syanten
         #self.show()
@@ -50,16 +52,9 @@ class MJ():
             #actの牌を手配からデクリメント
             self.tehai[act] -= 1.0
             #打牌した段階でシャンテンのチェック
-            #self.check_after_syanten()
             #self.check_syanten()
-            #山から新しい牌を引く
-            new_hai = self.yama[self.cursor]
-            self.cursor += 1
-            self.tehai[new_hai] += 1.0
-            #あがったか、流局かチェック
-            self.check_tehai()
-            self.turn_num += 1
-            #self.show()
+            #牌をツモる
+            self.tsumo()
         else:
             if self.print_flg:
                 print("dahai miss")
@@ -67,6 +62,17 @@ class MJ():
             self.done = True
             act = self.get_empty_dahai()
             self.dahai(act)
+
+    def tsumo(self):
+        #山から新しい牌を引く
+        tsumo_hai = self.yama[self.cursor]
+        self.cursor += 1
+        self.tehai[tsumo_hai] += 1.0
+        self.invisible_hai[tsumo_hai] -= 1
+        #あがったか、流局かチェック
+        self.check_tehai()
+        self.turn_num += 1
+
 
     def check_tehai(self):
         """流局もしくは和了してないか"""
