@@ -58,7 +58,7 @@ def main():
     model_save_interval = inifile.getint('settings', 'model_save_interval') #モデルを保存する間隔
     model_save_path = inifile.get('settings', 'model_save_path') #モデルを保存するパス
     learn_log_path = inifile.get('settings', 'learn_log_path') #ログの保存先
-   #各種クラスオブジェクトの生成
+    #各種クラスオブジェクトの生成
     mj = mj_game.MJ()
     rwd = reward.ChangeReward(episodes_num)
     #rwd = reward.Reward(episodes_num)

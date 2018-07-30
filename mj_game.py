@@ -12,6 +12,7 @@ class MJ():
         inifile.read('./config.ini','UTF-8')
         self.ryukyoku_num = inifile.getint('settings', 'ryukyoku_num') #流局までの順目
         self.print_flg = print_flg
+        self.mj_tehai = mj_tehai.MJTehai()
      
     #指定されたシャンテンになる山を生成する
     def make_yama(self):
@@ -36,7 +37,7 @@ class MJ():
             self.tehai[tsumo_hai] += 1
             self.cursor += 1
             self.invisible_hai[tsumo_hai] -= 1
-        self.syanten = mj_tehai.get_syanten(self.tehai)
+        self.syanten = self.mj_tehai.get_syanten(self.tehai)
         self.pre_syanten = self.syanten
         #self.show()
 
@@ -76,7 +77,7 @@ class MJ():
 
     def check_tehai(self):
         """流局もしくは和了してないか"""
-        self.syanten = mj_tehai.get_syanten(self.tehai)
+        self.syanten = self.mj_tehai.get_syanten(self.tehai)
         if self.syanten < 0:
             self.done = True
             self.agari = True
