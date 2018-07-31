@@ -58,6 +58,7 @@ def main():
     model_save_interval = inifile.getint('settings', 'model_save_interval') #モデルを保存する間隔
     model_save_path = inifile.get('settings', 'model_save_path') #モデルを保存するパス
     learn_log_path = inifile.get('settings', 'learn_log_path') #ログの保存先
+    output_interval = inifile.getint('settings', 'output_interval') #表示、ログの出力頻度
     #各種クラスオブジェクトの生成
     mj = mj_game.MJ()
     rwd = reward.ChangeReward(episodes_num)
@@ -118,7 +119,7 @@ def main():
             else:
                 last_state = get_state(mj)
         #一定エピソードごとに出力
-        if i % 2000 == 0:
+        if i % output_interval == 0:
             average_value = agent.get_statistics()[0][1]
             average_entropy = agent.get_statistics()[1][1]
             result = {
