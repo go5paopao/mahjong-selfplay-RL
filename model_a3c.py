@@ -191,16 +191,22 @@ class SharedFunctionFC(chainer.Chain):
 
 class A3CFFSoftmax(a3c.A3CSharedModel):
     """An example of A3C feedforward softmax policy."""
-    def __init__(self):
+    def __init__(self,gpu=False):
         self.q_func = policies.SoftmaxPolicy(model=QFunction())
         self.v_func = VFunction()
         self.common = SharedFunctionSFCNN()#SharedFunctionCNN()
+        if gpu:
+            self.q_func.to_gpu(0)
+            self.v_func.to_gpu(0)
+            self.common.to_gpu(0)
         #super(A3CFFSoftmax,self).__init__(self.common,self.q_func, self.v_func)
         super().__init__(self.common,self.q_func, self.v_func)
 
 class Model():
-    def __init__(self):
-        self.model = A3CFFSoftmax()
+    def __init__(self,gpu=False):
+        self.model = A3CFFSoftmax(gpu)
+        if gpu:
+            self.model.to_gpu(0)
         self.optimizer = rmsprop_async.RMSpropAsync(lr=7e-4, eps=1e-1, alpha=0.99)
         self.agent = a3c.A3C(self.model, self.optimizer, t_max=5, gamma=0.99, beta=1e-2, phi=phi)
         self.add_hooks = [
